@@ -14,7 +14,7 @@ api_key = os.getenv("API_KEY")
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(200,200,800,800)
+        self.setGeometry(100,100,1400,900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
         self.konusma_gecmisi = []
@@ -29,17 +29,17 @@ class Window(QMainWindow):
 
         self.yazi_kutusu = QTextEdit(self)
         self.yazi_kutusu.move(220,20)
-        self.yazi_kutusu.resize(500,150)
+        self.yazi_kutusu.resize(1000,300)
 
         self.buton = QPushButton(self)
-        self.buton.move(270,180)
+        self.buton.move(220,330)
         self.buton.setText("gönder")
         self.buton.clicked.connect(self.sendMessage)
 
         self.sonuc_kutusu = QTextEdit(self)
         self.sonuc_kutusu.setReadOnly(True)
-        self.sonuc_kutusu.move(220, 250)
-        self.sonuc_kutusu.resize(500, 400)
+        self.sonuc_kutusu.move(220, 400)
+        self.sonuc_kutusu.resize(1000,450)
 
     def sendMessage(self):
         kullanici_girdisi = self.yazi_kutusu.toPlainText()
@@ -71,5 +71,4 @@ def main():
     sys.exit(uygulama.exec_())  
 
 if __name__ == "__main__":
-    main()          
-
+    main()
