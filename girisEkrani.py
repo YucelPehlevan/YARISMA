@@ -21,6 +21,11 @@ class LoginRegisterWindow(QMainWindow):
         self.yazi = QLabel("Alışveriş asistanına hoşgeldiniz devam etmek için lütfen giriş yapın",self)
         self.yazi.setFont(degiskenler.baslik_fontu)
         self.yazi.setGeometry(200,100,1200,100)
+        
+        self.kapat_butonu = QPushButton("Çıkış Yap",self)
+        self.kapat_butonu.setGeometry(100,700,200,100)
+        self.kapat_butonu.setFont(degiskenler.buton_fontu)
+        self.kapat_butonu.clicked.connect(self.cikis_yap)
 
         self.initLoginForm()
         self.initRegisterForm()
@@ -35,27 +40,27 @@ class LoginRegisterWindow(QMainWindow):
         self.email_yazisi.setFont(degiskenler.yazi_fontu)
         self.email_yazisi.setGeometry(170,370,200,40)
 
-        self.email_kutusu = QLineEdit(self)
-        self.email_kutusu.setGeometry(375,370,250,50)
+        self.giris_email_kutusu = QLineEdit(self)
+        self.giris_email_kutusu.setGeometry(375,370,250,50)
 
         self.sifre_yazisi = QLabel("Lütfen şifrenizi giriniz: ",self)
         self.sifre_yazisi.setFont(degiskenler.yazi_fontu)
         self.sifre_yazisi.setGeometry(180,470,200,40)
 
-        self.sifre_kutusu = QLineEdit(self)
-        self.sifre_kutusu.setGeometry(375,470,250,50)
+        self.giris_sifre_kutusu = QLineEdit(self)
+        self.giris_sifre_kutusu.setGeometry(375,470,250,50)
 
     def initRegisterForm(self):
         self.kayit_butonu = QPushButton("Kayıt Ol",self)
         self.kayit_butonu.setGeometry(950,250,200,100)
         self.kayit_butonu.setFont(degiskenler.buton_fontu)
-        self.kayit_butonu.clicked.connect(self.giris_yap)
+        self.kayit_butonu.clicked.connect(self.kayit_ol)
 
-        self.email_kutusu = QLineEdit(self)
-        self.email_kutusu.setGeometry(925,370,250,50)
+        self.kayit_email_kutusu = QLineEdit(self)
+        self.kayit_email_kutusu.setGeometry(925,370,250,50)
 
-        self.sifre_kutusu = QLineEdit(self)
-        self.sifre_kutusu.setGeometry(925,470,250,50)
+        self.kayit_sifre_kutusu = QLineEdit(self)
+        self.kayit_sifre_kutusu.setGeometry(925,470,250,50)
 
         self.cinsiyet_yazisi = QLabel("Cinsiyetiniz: ",self)
         self.cinsiyet_yazisi.setFont(degiskenler.yazi_fontu)
@@ -110,13 +115,57 @@ class LoginRegisterWindow(QMainWindow):
         self.kilo_kutusu.addItems(degiskenler.kilo_listesi)
         self.kilo_kutusu.setGeometry(1150,750,150,50)
         self.kilo_kutusu.setFont(degiskenler.yazi_fontu)
+
+    def cikis_yap(self):
+        soru = QMessageBox().question(self,"Çıkış yap","Uygulamadan çıkmak istediğinize emin misiniz?",QMessageBox.Yes | QMessageBox.No) 
+        if soru == QMessageBox.Yes:
+            self.close()
+            sys.exit()  
   
     def giris_yap(self):
+        email = self.giris_email_kutusu.text().strip().lower()
+        sifre = self.giris_sifre_kutusu.text().strip()
+        from veriYonetimi import giris_kontrol
         from chat import ChatWindow
-        degiskenler.giris_durumu = True
-        self.konusma_penceresi = ChatWindow()
-        self.hide()
-        self.konusma_penceresi.show()       
+
+        if giris_kontrol(email,sifre):
+            degiskenler.giris_durumu = True
+            self.konusma_penceresi = ChatWindow()
+            self.hide()
+            self.konusma_penceresi.show()
+        else:
+            uyari = QMessageBox()
+            uyari.setWindowTitle("Giriş Başarısız")
+            uyari.setText("E-Posta ya da şifre hatalı")
+            uyari.exec_()   
+
+    def kayit_ol(self):
+        email = self.kayit_email_kutusu.text()
+        sifre = self.kayit_sifre_kutusu.text()
+        from veriYonetimi import kullanici_var_mi,kullanici_ekle
+        from chat import ChatWindow 
+        
+        if kullanici_var_mi(email):
+            uyari = QMessageBox()
+            uyari.setWindowTitle("Kayıt Başarısız")
+            uyari.setText("Bu maile ait kayıtlı bir hesap bulunmaktadır")
+            uyari.exec_()
+        elif any(email.endswith(kelime) for kelime in ["@gmail.com", "@hotmail.com", "@outlook.com"]) and len(sifre) >= 6 and " " not in email and " " not in sifre: 
+            kullanici_ekle(email,sifre,profil={"cinsiyet": self.cinsiyet_kutusu.currentText(),
+                                                "meslek": self.meslek_kutusu.currentText(),
+                                                "egitim": self.egitim_kutusu.currentText(),
+                                                "yas": self.yas_kutusu.currentText(),
+                                                "boy": self.boy_kutusu.currentText(),
+                                                "kilo": self.kilo_kutusu.currentText()})
+            degiskenler.giris_durumu = True
+            self.konusma_penceresi = ChatWindow()
+            self.hide()
+            self.konusma_penceresi.show()
+        else:
+            uyari = QMessageBox()
+            uyari.setWindowTitle("Kayıt Başarısız")
+            uyari.setText("Lütfen geçerli bir e-posta adresi ve en az 6 haneli bir şifre girin.Ayrıca boşluk karakterini kullanmayın")
+            uyari.exec_()              
 
 def main():
     uygulama = QApplication(sys.argv)
