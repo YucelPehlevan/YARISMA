@@ -4,6 +4,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from dotenv import load_dotenv
 import os
+from girisEkrani import LoginRegisterWindow
+import degiskenler
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
@@ -54,7 +56,7 @@ urunler = {
 load_dotenv()
 api_key = os.getenv("API_KEY")
 
-class Window(QMainWindow):
+class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setGeometry(100, 100, 1400, 900)
@@ -83,9 +85,15 @@ class Window(QMainWindow):
         self.yazi_kutusu.setFont(font)
         self.yazi_kutusu.setGeometry(250, 20, 1100, 300)
 
-        self.buton = QPushButton("Gönder", self)
-        self.buton.setGeometry(250, 330, 100, 30)
-        self.buton.clicked.connect(self.sendMessage)
+        self.mesaj_butonu = QPushButton("Gönder", self)
+        self.mesaj_butonu.setGeometry(250, 330, 150, 50)
+        self.mesaj_butonu.setFont(degiskenler.buton_fontu)
+        self.mesaj_butonu.clicked.connect(self.sendMessage)
+
+        self.cikis_butonu = QPushButton("Çıkış Yap", self)
+        self.cikis_butonu.setGeometry(50, 800, 150, 50)
+        self.cikis_butonu.setFont(degiskenler.buton_fontu)
+        self.cikis_butonu.clicked.connect(self.cikis_yap)
 
         self.sonuc_kutusu = QTextEdit(self)
         self.sonuc_kutusu.setReadOnly(True)
@@ -145,13 +153,20 @@ class Window(QMainWindow):
             self.konusma_gecmisi[-1] += self.typing_text
             self.typing_timer.stop()
 
+    def cikis_yap(self):
+        from girisEkrani import LoginRegisterWindow
+        cevap = QMessageBox.question(self, "Çıkış Yap", "Giriş ekranına dönmek istiyor musunuz?",
+                                  QMessageBox.Yes | QMessageBox.No)
+        if cevap == QMessageBox.Yes:
+            self.login_window = LoginRegisterWindow()
+            self.login_window.show()
+            self.hide()  # veya self.hide()       
 
 def main():
     app = QApplication(sys.argv)
-    pencere = Window()
-    pencere.show()
+    giris_ekrani = LoginRegisterWindow()
+    giris_ekrani.show()
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
