@@ -123,8 +123,8 @@ class LoginRegisterWindow(QMainWindow):
             sys.exit()  
   
     def giris_yap(self):
-        email = self.giris_email_kutusu.text().strip().lower()
-        sifre = self.giris_sifre_kutusu.text().strip()
+        email = self.giris_email_kutusu.text()
+        sifre = self.giris_sifre_kutusu.text()
         from veriYonetimi import giris_kontrol
         from chat import ChatWindow
 

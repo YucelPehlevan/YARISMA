@@ -129,10 +129,14 @@ class ChatWindow(QMainWindow):
 
         if self.chat is None:
             self.chat = model.start_chat(history=[])
-        cevap = self.chat.send_message(prompt)
+        try:
+            cevap = self.chat.send_message(prompt)
+        except Exception as e:
+            QMessageBox.warning(self, "Hata", f"AI servisinde hata: {str(e)}")
+            return
 
         # Kullanıcı mesajı hemen gösterilir
-        self.konusma_gecmisi.append(f"<b><span style='color:black;'>Kullanıcı:</span></b> {kullanici_girdisi}")
+        self.konusma_gecmisi.append(f"<b><span style='color:black;'>Siz:</span></b> {kullanici_girdisi}")
         self.konusma_gecmisi.append(f"<b><span style='color:blue;'>Asistan:</span></b> ")
         self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
 
