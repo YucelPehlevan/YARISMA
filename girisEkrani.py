@@ -5,6 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import os
 import degiskenler
+from veriYonetimi import *
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
@@ -125,11 +126,11 @@ class LoginRegisterWindow(QMainWindow):
     def giris_yap(self):
         email = self.giris_email_kutusu.text()
         sifre = self.giris_sifre_kutusu.text()
-        from veriYonetimi import giris_kontrol
         from chat import ChatWindow
 
         if giris_kontrol(email,sifre):
             degiskenler.giris_durumu = True
+            degiskenler.giris_yapan_email = email
             self.konusma_penceresi = ChatWindow()
             self.hide()
             self.konusma_penceresi.show()
@@ -142,7 +143,6 @@ class LoginRegisterWindow(QMainWindow):
     def kayit_ol(self):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
-        from veriYonetimi import kullanici_var_mi,kullanici_ekle
         from chat import ChatWindow 
         
         if kullanici_var_mi(email):
@@ -158,6 +158,7 @@ class LoginRegisterWindow(QMainWindow):
                                                 "boy": self.boy_kutusu.currentText(),
                                                 "kilo": self.kilo_kutusu.currentText()})
             degiskenler.giris_durumu = True
+            degiskenler.giris_yapan_email = email
             self.konusma_penceresi = ChatWindow()
             self.hide()
             self.konusma_penceresi.show()
@@ -165,7 +166,7 @@ class LoginRegisterWindow(QMainWindow):
             uyari = QMessageBox()
             uyari.setWindowTitle("Kayıt Başarısız")
             uyari.setText("Lütfen geçerli bir e-posta adresi ve en az 6 haneli bir şifre girin.Ayrıca boşluk karakterini kullanmayın")
-            uyari.exec_()              
+            uyari.exec_()                     
 
 def main():
     uygulama = QApplication(sys.argv)

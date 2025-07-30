@@ -4,7 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from dotenv import load_dotenv
 import os
-from girisEkrani import LoginRegisterWindow
+from girisEkrani import *
 import degiskenler
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
@@ -63,6 +63,8 @@ class ChatWindow(QMainWindow):
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
 
+        self.kullanici_email = degiskenler.giris_yapan_email
+        self.profil = kullanici_profili_al(self.kullanici_email) 
         self.konusma_gecmisi = []
         self.chat = None
         self.urunler = urunler
@@ -116,15 +118,23 @@ class ChatWindow(QMainWindow):
 
         prompt = f"""
         Sen bir alışveriş asistanısın. Aşağıdaki ürünleri incele ve sadece kullanıcının ihtiyaçlarına uygun olanları öner. 
-        Kullanıcının ihtiyacını analiz et ve buna göre ürünleri filtrele. Hafızanı kullanarak önceki mesajları hatırla.
+        Kullanıcının ihtiyacını ve özelliklerini analiz et ve buna göre ürünleri filtrele. Hafızanı kullanarak önceki mesajları hatırla.
 
         Ürün Listesi:
         {urun_verisi}
 
+        kullanıcı özellikleri:
+        - Cinsiyet: {self.profil.get('cinsiyet')}
+        - Yaş: {self.profil.get('yas')}
+        - Meslek: {self.profil.get('meslek')}
+        - Eğitim: {self.profil.get('egitim')}
+        - Boy: {self.profil.get('boy')}
+        - Kilo: {self.profil.get('kilo')}
+
         Kullanıcının mesajı:
         "{kullanici_girdisi}"
 
-        Cevabını sadece uygun ürünleri önererek ver. Gerekirse önce sorular sorabilirsin (örneğin bütçesi nedir, hangi marka vs.).
+        Cevabını uygun ürünleri, kullanıcı özelliklerini ve kullanıcı mesajını dikkate alarak ver. Gerekirse önce sorular sorabilirsin (örneğin bütçesi nedir, hangi marka vs.).
         """
 
         if self.chat is None:
