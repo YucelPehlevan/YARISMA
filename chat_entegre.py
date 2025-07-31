@@ -371,8 +371,8 @@ class EntegreChatWindow(QMainWindow):
 
         # Grafik Butonu
         self.show_graph_button = QPushButton("Puan Grafiğini Göster", self)
-        self.show_graph_button.setGeometry(460, 150, 200, 50)
-        self.show_graph_button.setFont(QFont("Arial", 10, QFont.Bold))
+        self.show_graph_button.setGeometry(500, 370, 300, 50)
+        self.show_graph_button.setFont(degiskenler.buton_fontu)
         self.show_graph_button.clicked.connect(self.request_graph_from_button)
         self.show_graph_button.setVisible(False)
 
