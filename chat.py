@@ -54,12 +54,12 @@ urunler = {
 }
 
 load_dotenv()
-api_key = os.getenv("API_KEY")
+api_key = os.getenv("GEMINI_API_KEY")
 
 class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 1400, 900)
+        self.setGeometry(100, 100, 1600, 900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
 
@@ -80,15 +80,53 @@ class ChatWindow(QMainWindow):
         font = QFont("Arial", 10)
 
         self.yazi = QLabel("Alışverişle ilgili istediğinizi sorun: ", self)
-        self.yazi.setFont(font)
-        self.yazi.setGeometry(10, 20, 300, 20)
+        self.yazi.setFont(degiskenler.yazi_fontu)
+        self.yazi.setGeometry(10, 20, 300, 30)
 
         self.yazi_kutusu = QTextEdit(self)
         self.yazi_kutusu.setFont(font)
-        self.yazi_kutusu.setGeometry(250, 20, 1100, 300)
+        self.yazi_kutusu.setGeometry(300, 20, 1200, 300)
+        self.yazi_kutusu.setPlaceholderText("Bugün ne aramak isterdiniz? ")
+
+        self.urun_yazisi = QLabel("Ürün: ", self)
+        self.urun_yazisi.setFont(degiskenler.yazi_fontu)
+        self.urun_yazisi.setGeometry(38, 75, 70, 40)
+
+        self.urun_kutusu = QComboBox(self)
+        self.urun_kutusu.addItems(degiskenler.urun_listesi)
+        self.urun_kutusu.setFont(degiskenler.yazi_fontu)
+        self.urun_kutusu.setGeometry(90,70,202,50)
+        self.urun_kutusu.currentTextChanged.connect(self.urun_degistir)
+
+        self.butce_yazisi = QLabel("Bütçe: ", self)
+        self.butce_yazisi.setFont(degiskenler.yazi_fontu)
+        self.butce_yazisi.setGeometry(28, 150, 70, 40)
+
+        self.butce_kutusu = QComboBox(self)
+        self.butce_kutusu.addItems(degiskenler.butce_listesi)
+        self.butce_kutusu.setFont(degiskenler.yazi_fontu)
+        self.butce_kutusu.setGeometry(90,145,202,50)
+
+        self.marka_yazisi = QLabel("Marka: ", self)
+        self.marka_yazisi.setFont(degiskenler.yazi_fontu)
+        self.marka_yazisi.setGeometry(25, 225, 70, 40)
+
+        self.marka_kutusu = QComboBox(self)
+        self.marka_kutusu.addItems(degiskenler.tum_markalar)
+        self.marka_kutusu.setFont(degiskenler.yazi_fontu)
+        self.marka_kutusu.setGeometry(90,225,202,50)
+
+        self.kullanim_yazisi = QLabel("Kullanım: ", self)
+        self.kullanim_yazisi.setFont(degiskenler.yazi_fontu)
+        self.kullanim_yazisi.setGeometry(10, 300, 80, 40)
+
+        self.kullanim_kutusu = QComboBox(self)
+        self.kullanim_kutusu.addItems(degiskenler.tum_kullanim_amaclari)
+        self.kullanim_kutusu.setFont(degiskenler.yazi_fontu)
+        self.kullanim_kutusu.setGeometry(90,300,202,50)
 
         self.mesaj_butonu = QPushButton("Gönder", self)
-        self.mesaj_butonu.setGeometry(250, 330, 150, 50)
+        self.mesaj_butonu.setGeometry(300, 330, 150, 50)
         self.mesaj_butonu.setFont(degiskenler.buton_fontu)
         self.mesaj_butonu.clicked.connect(self.sendMessage)
 
@@ -97,10 +135,16 @@ class ChatWindow(QMainWindow):
         self.cikis_butonu.setFont(degiskenler.buton_fontu)
         self.cikis_butonu.clicked.connect(self.cikis_yap)
 
+        self.temizleme_butonu = QPushButton("Sohbeti Sil", self)
+        self.temizleme_butonu.setGeometry(50,725,150,50)
+        self.temizleme_butonu.setFont(degiskenler.buton_fontu)
+        self.temizleme_butonu.clicked.connect(self.sohbet_gecmisini_temizle) 
+
         self.sonuc_kutusu = QTextEdit(self)
         self.sonuc_kutusu.setReadOnly(True)
         self.sonuc_kutusu.setFont(font)
-        self.sonuc_kutusu.setGeometry(250, 400, 1100, 450)
+        self.sonuc_kutusu.setGeometry(300, 400, 1200, 450)
+        self.gecmisi_yukle()
 
     def sendMessage(self):
         kullanici_girdisi = self.yazi_kutusu.toPlainText().strip()
@@ -119,6 +163,7 @@ class ChatWindow(QMainWindow):
         prompt = f"""
         Sen bir alışveriş asistanısın. Aşağıdaki ürünleri incele ve sadece kullanıcının ihtiyaçlarına uygun olanları öner. 
         Kullanıcının ihtiyacını ve özelliklerini analiz et ve buna göre ürünleri filtrele. Hafızanı kullanarak önceki mesajları hatırla.
+        Eğer kullanıcı iki ürün arasında kalırsa 2 ürünü analiz edip 2si arasından bir öneri yap.
 
         Ürün Listesi:
         {urun_verisi}
@@ -131,10 +176,16 @@ class ChatWindow(QMainWindow):
         - Boy: {self.profil.get('boy')}
         - Kilo: {self.profil.get('kilo')}
 
+        Ürün özellikleri:
+        - İstediği ürün: {self.urun_kutusu.currentText()} burdaki sonuca göre ürünler listende filtreleme yap
+        - Kullanım amacı: {self.kullanim_kutusu.currentText()}
+        - Bütçe: {self.butce_kutusu.currentText()} Eğer bütçe kısmı sadece '-' olarak gelirse bütçe öğrenmek için soru sorabilirsin yoksa bütçeyi yazdığı şekilde kabul et
+        - Marka Tercihi: {self.marka_kutusu.currentText()} Eğer marka kısmı farketmez olursa ekstra marka sorma
+
         Kullanıcının mesajı:
         "{kullanici_girdisi}"
 
-        Cevabını uygun ürünleri, kullanıcı özelliklerini ve kullanıcı mesajını dikkate alarak ver. Gerekirse önce sorular sorabilirsin (örneğin bütçesi nedir, hangi marka vs.).
+        Cevabını uygun ürünleri, kullanıcı özelliklerini ve kullanıcı mesajını dikkate alarak ver. Gerekirse önce sorular sorabilirsin (örneğin telefon özelliği vs.).
         """
 
         if self.chat is None:
@@ -144,6 +195,7 @@ class ChatWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Hata", f"AI servisinde hata: {str(e)}")
             return
+        self.sohbeti_kaydet(kullanici_girdisi, cevap.text)
 
         # Kullanıcı mesajı hemen gösterilir
         self.konusma_gecmisi.append(f"<b><span style='color:black;'>Siz:</span></b> {kullanici_girdisi}")
@@ -156,6 +208,33 @@ class ChatWindow(QMainWindow):
         self.typing_timer.start(15)
 
         self.yazi_kutusu.clear()
+    
+    def urun_degistir(self,secilen_urun):
+        self.marka_kutusu.clear()
+        self.kullanim_kutusu.clear()
+
+        self.marka_kutusu.addItems(degiskenler.marka_listeleri.get(secilen_urun,[]))
+        self.kullanim_kutusu.addItems(degiskenler.kullanim_amaci_listeleri.get(secilen_urun,[]))
+
+    def sohbeti_kaydet(self, kullanici_girdi, asistan_cevabi):
+        dosya_adi = f"gecmisler/{degiskenler.giris_yapan_email}.txt"
+        os.makedirs("gecmisler", exist_ok=True)
+        with open(dosya_adi, "a", encoding="utf-8") as f:
+            f.write(f"Kullanıcı: {kullanici_girdi}\n")
+            f.write(f"Asistan: {asistan_cevabi}\n\n")
+
+    def gecmisi_yukle(self):
+        dosya_adi = f"gecmisler/{degiskenler.giris_yapan_email}.txt"
+        if os.path.exists(dosya_adi):
+            with open(dosya_adi, "r", encoding="utf-8") as f:
+                gecmis = f.read()
+                gecmis_html = "<br>".join(gecmis.splitlines())
+                self.konusma_gecmisi.append(gecmis_html)
+                self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
+
+    def sohbet_gecmisini_temizle(self):
+        self.konusma_gecmisi.clear()
+        self.sonuc_kutusu.clear()                    
 
     def typeNextChar(self):
         if self.typing_index < len(self.typing_text):
@@ -178,7 +257,7 @@ class ChatWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    giris_ekrani = LoginRegisterWindow()
+    giris_ekrani = ChatWindow()
     giris_ekrani.show()
     sys.exit(app.exec_())
 

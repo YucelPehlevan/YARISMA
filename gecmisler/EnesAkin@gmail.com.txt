@@ -1,0 +1,9 @@
+Kullanıcı: merhaba kardeş telefonö öner
+Asistan: Merhaba! Telefon önerisi istemişsiniz. Tabii ki yardımcı olurum. Öncelikle şunu belirtmek isterim, "kardeş" kelimesi samimi bir yaklaşım olsa da, ben bir yapay zeka asistanıyım. Size en iyi önerileri sunabilmem için birkaç sorum olacak:
+
+1.  **Bütçeniz nedir?** Yani, telefon için ayırabileceğiniz maksimum bir fiyat aralığı var mı?
+2.  **Hangi özellikler sizin için öncelikli?** Örneğin, kamera kalitesi, batarya ömrü, depolama alanı, işlemci hızı gibi özelliklerden hangisi sizin için daha önemli?
+3.  **Hangi markaları tercih edersiniz veya hangi markalardan uzak durursunuz?** Belirli bir marka tercihinizi bilmek, seçenekleri daraltmama yardımcı olur.
+
+Bu bilgilere sahip olduktan sonra, size en uygun telefonları önerebilirim.
+

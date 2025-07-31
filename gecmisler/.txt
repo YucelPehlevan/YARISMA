@@ -1,0 +1,83 @@
+Kullanıcı: merhaba
+Asistan: Merhaba! Size en uygun telefonu bulmak için buradayım. Öncelikle bütçeniz konusunda netleşmek istiyorum. 7.500 - 10.000 TL aralığında mı düşünüyorsunuz, yoksa bu aralık değişebilir mi?
+
+Bunun dışında, telefonunuzu hangi amaçlarla kullanacaksınız? (Örneğin, fotoğraf çekmek, oyun oynamak, sosyal medyada gezinmek vb.) Ve herhangi bir marka tercihinizi öğrenebilir miyim?
+
+
+Kullanıcı: merhaba bana 128gb depolaması olan telefon önerir misin
+Asistan: Merhaba! 128 GB depolama alanına sahip bir telefon aradığınızı anlıyorum. Bütçeniz 15.000 - 20.000 TL aralığında olduğuna göre, aşağıdaki modelleri önerebilirim:
+
+*   **Samsung Galaxy A34:** 14.500 TL fiyatıyla bütçenize uygun ve 128 GB depolama alanına sahip. Ayrıca 5000 mAh bataryasıyla uzun kullanım ömrü sunuyor.
+*   **Huawei Nova 9:** 15.000 TL fiyatıyla 128 GB depolama alanı, 8 GB RAM ve 66W hızlı şarj özellikleriyle dikkat çekiyor.
+*   **POCO X5 Pro:** 13.500 TL fiyatıyla 256 GB depolama alanı sunsa da, 128 GB'lık versiyonu da bulunabilir. Kontrol etmenizi öneririm. Snapdragon 778G işlemcisiyle de yüksek performans sağlıyor.
+
+Bu modellerin yanı sıra, hangi markaları tercih ettiğiniz veya hangi özelliklerin sizin için daha önemli olduğunu belirtirseniz, size daha doğru önerilerde bulunabilirim. Örneğin, kamera performansı, batarya ömrü veya ekran kalitesi gibi öncelikleriniz nelerdir?
+
+
+Kullanıcı: bana telefon önerisi yapar mısın
+Asistan: Merhaba! Tabii ki, size telefon önerisinde bulunabilirim. Öncelikle, beklentilerinizi ve önceliklerinizi daha iyi anlamam için birkaç soru sormak isterim:
+
+1.  **Telefonu ne amaçla kullanacaksınız?** (Örneğin, oyun oynamak, fotoğraf çekmek, sosyal medyada gezinmek, iş için kullanmak vb.)
+2.  **Kamera sizin için ne kadar önemli?** (Yüksek çözünürlüklü fotoğraflar mı çekmek istiyorsunuz, yoksa temel seviyede yeterli mi?)
+3.  **Batarya ömrü sizin için ne kadar önemli?** (Telefonunuzun gün boyu dayanmasını mı istiyorsunuz?)
+4.  **Ekran boyutu sizin için önemli mi?** (Büyük ekran mı tercih edersiniz, yoksa daha kompakt bir model mi?)
+5.  **Marka tercihinizi Samsung olarak belirtmişsiniz, bu tercihinizi etkileyen özel bir neden var mı?** (Örneğin, daha önceki deneyimleriniz, ekosistem vb.)
+6. **Bütçeniz 20.000 - 30.000 TL aralığında demiştiniz, bu bütçe aralığında en iyi performansı mı arıyorsunuz?**
+
+Bu sorulara cevap verirseniz, size en uygun telefonları önerme konusunda daha iyi yardımcı olabilirim.
+
+
+Kullanıcı: merhaba
+Asistan: Merhaba! Size en uygun telefonu bulmak için birkaç soru sormama izin verin.
+
+1.  **Bütçeniz ne kadar?** Bu, seçenekleri daraltmamıza yardımcı olacak.
+2.  **Telefonu ne için kullanacaksınız?** (Örneğin, fotoğraf çekmek, oyun oynamak, sosyal medyada gezinmek vb.)
+3.  **Öncelikleriniz nelerdir?** (Örneğin, kamera kalitesi, pil ömrü, depolama alanı, performans vb.)
+
+Bu bilgilere sahip olduğumda, size en uygun telefonları önerebilirim.
+
+
+Kullanıcı: merhaba
+Asistan: Merhaba! Bütçenizin 1.000 TL altında olduğunu görüyorum. Bu fiyat aralığında listemizde maalesef uygun bir telefon bulunmuyor. Bütçenizi artırmayı düşünür müsünüz? Veya bu bütçeyle alabileceğiniz ikinci el telefonlara bakabiliriz. Ne dersiniz?
+
+
+Kullanıcı: olur
+Asistan: Anlıyorum, ikinci el telefonlara bakabiliriz. Peki, ikinci el bir telefon için de yaklaşık olarak bir bütçe aralığınız var mı? Böylece daha iyi bir filtreleme yapabilirim.
+
+
+Kullanıcı: bana uygun ürün öner
+Asistan: Anlıyorum, kulaklık arıyorsunuz ve Sennheiser markasını tercih ediyorsunuz. Bütçeniz 5.000 - 7.500 TL aralığında ve kulaklığı spor yaparken kullanacaksınız.
+
+Size en uygun kulaklığı önerebilmem için birkaç ek soru sormam gerekiyor:
+
+1.  **Kulaklık tipi tercihiniz nedir?** (Örneğin, kablolu, kablosuz, kulak içi, kulak üstü vb.)
+2.  **Kulaklığın suya ve tere dayanıklı olması sizin için önemli mi?**
+3.  **Aktif gürültü engelleme (ANC) özelliği sizin için önemli mi?** (Bu özellik dış ortam seslerini engelleyerek sporunuza odaklanmanıza yardımcı olur.)
+
+Bu sorulara cevap verdiğinizde size en uygun Sennheiser kulaklık modelini önerebilirim.
+
+
+Kullanıcı: merhaba istediğim tarzda ürün bul
+Asistan: Merhaba! Profesyonel fotoğrafçılık için kamera özellikli bir telefon aradığınızı anlıyorum. Ancak bütçeniz 3.000 - 5.000 TL aralığında. Listemdeki telefonların hiçbiri bu bütçeye uygun değil ve profesyonel fotoğrafçılık için yeterli özelliklere sahip değil. Bu durumda size birkaç sorum olacak:
+
+1.  **Bütçenizi artırma imkanınız var mı?** Daha yüksek bir bütçe ile daha iyi kamera özelliklerine sahip telefonlar önerebilirim.
+2.  **Profesyonel fotoğrafçılık derken neyi kastediyorsunuz?** Hangi tür fotoğraflar çekmeyi planlıyorsunuz? (Örneğin, manzara, portre, ürün fotoğrafı vb.) Bu, kamera özelliklerine (örneğin, megapiksel, lens türleri, optik zoom vb.) karar vermeme yardımcı olacak.
+3.  **Nikon marka tercihinizi telefon için mi belirtiniz?** Telefon kameralarında genellikle marka tercihi pek mümkün olmuyor.
+
+
+Kullanıcı: aradıgım tarzda pc bul
+Asistan: Anladım, oyun oynamak için bir bilgisayar arıyorsunuz ve marka tercihi belirtmediniz. Bütçeniz de 15.000 - 20.000 TL aralığında. Ancak, sağladığınız listede bilgisayar bulunmuyor, sadece telefonlar var.
+
+Bu durumda, oyun için uygun bir bilgisayar önerebilmem için bana biraz daha bilgi vermeniz gerekecek:
+
+*   **Masaüstü mü, dizüstü mü tercih edersiniz?**
+*   **Hangi tür oyunları oynamayı planlıyorsunuz?** (Örneğin, yüksek grafikli AAA oyunlar mı, yoksa daha basit oyunlar mı?) Bu, ekran kartı ve işlemci gibi bileşenlerin seçiminde önemli olacak.
+*   **Ekran boyutu, RAM, depolama alanı gibi özel istekleriniz var mı?**
+
+Bu bilgilere sahip olduğumda, bütçenize ve ihtiyaçlarınıza en uygun bilgisayarı araştırmanıza yardımcı olabilirim.
+
+
+Kullanıcı: merhaba
+Asistan: Merhaba! Size en uygun telefonu bulmak için buradayım. Öncelikle, telefon için ayırdığınız bütçe nedir?
+
+

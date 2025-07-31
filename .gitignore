@@ -3,3 +3,5 @@ deneme.py
 robot.png
 degiskenler.py
 veriler.json
+__pycache__/
+*.pyc

@@ -12,7 +12,7 @@ os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Prog
 class LoginRegisterWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 1400, 900)
+        self.setGeometry(100, 100, 1600, 900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
 
@@ -21,7 +21,7 @@ class LoginRegisterWindow(QMainWindow):
     def initUI(self):
         self.yazi = QLabel("Alışveriş asistanına hoşgeldiniz devam etmek için lütfen giriş yapın",self)
         self.yazi.setFont(degiskenler.baslik_fontu)
-        self.yazi.setGeometry(200,100,1200,100)
+        self.yazi.setGeometry(300,100,1200,100)
         
         self.kapat_butonu = QPushButton("Çıkış Yap",self)
         self.kapat_butonu.setGeometry(100,700,200,100)
@@ -37,19 +37,21 @@ class LoginRegisterWindow(QMainWindow):
         self.giris_butonu.setFont(degiskenler.buton_fontu)
         self.giris_butonu.clicked.connect(self.giris_yap) 
 
-        self.email_yazisi = QLabel("Lütfen emailinizi giriniz: ",self)
+        self.email_yazisi = QLabel("Email: ",self)
         self.email_yazisi.setFont(degiskenler.yazi_fontu)
-        self.email_yazisi.setGeometry(170,370,200,40)
+        self.email_yazisi.setGeometry(310,370,200,40)
 
         self.giris_email_kutusu = QLineEdit(self)
         self.giris_email_kutusu.setGeometry(375,370,250,50)
+        self.giris_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
 
-        self.sifre_yazisi = QLabel("Lütfen şifrenizi giriniz: ",self)
+        self.sifre_yazisi = QLabel("Şifre: ",self)
         self.sifre_yazisi.setFont(degiskenler.yazi_fontu)
-        self.sifre_yazisi.setGeometry(180,470,200,40)
+        self.sifre_yazisi.setGeometry(310,470,200,40)
 
         self.giris_sifre_kutusu = QLineEdit(self)
         self.giris_sifre_kutusu.setGeometry(375,470,250,50)
+        self.giris_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
 
     def initRegisterForm(self):
         self.kayit_butonu = QPushButton("Kayıt Ol",self)
@@ -59,9 +61,11 @@ class LoginRegisterWindow(QMainWindow):
 
         self.kayit_email_kutusu = QLineEdit(self)
         self.kayit_email_kutusu.setGeometry(925,370,250,50)
+        self.kayit_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
 
         self.kayit_sifre_kutusu = QLineEdit(self)
         self.kayit_sifre_kutusu.setGeometry(925,470,250,50)
+        self.kayit_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
 
         self.cinsiyet_yazisi = QLabel("Cinsiyetiniz: ",self)
         self.cinsiyet_yazisi.setFont(degiskenler.yazi_fontu)
