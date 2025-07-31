@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon,QPalette,QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QLabel, \
     QMessageBox, QScrollArea, QMainWindow, QComboBox
 from dotenv import load_dotenv
@@ -215,10 +215,11 @@ def get_filtered_recommendations_chat(query, num_results=5):
 class EntegreChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 1600, 900)
+        self.setGeometry(100, 100, 1800, 900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
-
+        
+        self.gece_modu = False
         self.konusma_gecmisi = []
         self.last_query_category = ""
 
@@ -237,7 +238,7 @@ class EntegreChatWindow(QMainWindow):
                 raise ValueError("API_KEY .env dosyasında bulunamadı. Lütfen kontrol edin.")
             genai.configure(api_key=GEMINI_API_KEY)
             self.model = genai.GenerativeModel("models/gemini-2.0-flash")
-            self.chat_session = self.model.start_chat(history=[])
+            self.chat_session = self.model.start_chat(history=[{"role":"user","parts":"You are a helpful shopping assistant"}])
         except Exception as e:
             QMessageBox.critical(self, "API Hatası",
                                  f"Gemini API yapılandırılamadı: {e}\nLütfen .env dosyasındaki API anahtarınızı kontrol edin.")
@@ -343,6 +344,12 @@ class EntegreChatWindow(QMainWindow):
         self.mesaj_butonu.setGeometry(300, 370, 150, 50)
         self.mesaj_butonu.setFont(degiskenler.buton_fontu)
         self.mesaj_butonu.clicked.connect(self.send_message)
+
+        # gece modu butonu
+        self.mod_butonu = QPushButton("🌙 Gece Modu",self)
+        self.mod_butonu.setGeometry(1550,10,200,100)
+        self.mod_butonu.setFont(degiskenler.buton_fontu)
+        self.mod_butonu.clicked.connect(self.mod_degistir)
 
         # Sonuç kutusu
         self.sonuc_kutusu = QTextEdit(self)
@@ -521,35 +528,55 @@ class EntegreChatWindow(QMainWindow):
 
             # Chat.py'den alınan gelişmiş prompt yapısı
             prompt_text = f"""
-            Sen bir alışveriş asistanısın. Kullanıcının talebini en iyi şekilde karşılamak için aşağıdaki talimatları takip et:
-            1. Kullanıcının isteğini dikkatlice analiz et.
-            2. **Veritabanı Bilgisi:** Şu anda {categories_str} gibi kategorilerde ürünlerimiz bulunmaktadır. Özellikle 'wireless' kategorisinde telefon, tablet aksesuarı, bluetooth cihazlar, kılıflar, kulaklıklar gibi birçok ürün bulunmaktadır.
-            3. Eğer isteği genel bir ürün kategorisiyle ilgiliyse (örn. "telefon", "kulaklık"), genel bilgilerinden veya VERİLEN ÜRÜN LİSTESİNDEN yola çıkarak öneriler sun.
-            4. Kullanıcıya önerdiğin ürünler hakkında kısa ve öz bilgi ver (örn. ne tür bir telefon, öne çıkan özellikleri).
-            5. Eğer belirli bir ürün veya kategori bulamazsan, kullanıcıdan daha spesifik bilgi (bütçe, marka, özellik) isteyerek yardımcı ol.
-            6. Cevaplarını doğrudan ve bilgilendirici ver, sohbet havasında tut.
+            Sen yardımcı bir alışveriş asistanısın. Kullanıcının talebini en iyi şekilde karşılamak için aşağıdaki yönergeleri takip et:
+
+            **Görev Tanımı:**
+            Kullanıcının alışverişle ilgili isteğini analiz et ve veritabanındaki ürünlere göre en uygun önerileri sun.
+
+            **Veritabanı Bilgisi:**
+            Şu anda aşağıdaki kategorilerde ürünlerimiz bulunmaktadır:
+            {categories_str}
+
+            Özellikle 'wireless' kategorisinde telefon, tablet aksesuarı, bluetooth cihazlar, kılıflar, kulaklıklar gibi birçok ürün mevcuttur.
 
             **Kullanıcı Özellikleri:**
-            - Cinsiyet: {self.profil.get('cinsiyet', 'Belirtilmemiş')}
-            - Yaş: {self.profil.get('yas', 'Belirtilmemiş')}
-            - Meslek: {self.profil.get('meslek', 'Belirtilmemiş')}
-            - Eğitim: {self.profil.get('egitim', 'Belirtilmemiş')}
-            - Boy: {self.profil.get('boy', 'Belirtilmemiş')}
-            - Kilo: {self.profil.get('kilo', 'Belirtilmemiş')}
 
-            **Ürün Filtreleri:**
-            - İstediği ürün: {self.urun_kutusu.currentText()}
-            - Kullanım amacı: {self.kullanim_kutusu.currentText()}
-            - Bütçe: {self.butce_kutusu.currentText()} (Eğer bütçe kısmı sadece '-' olarak gelirse bütçe öğrenmek için soru sorabilirsin)
-            - Marka Tercihi: {self.marka_kutusu.currentText()} (Eğer marka kısmı 'Farketmez' olursa ekstra marka sorma)
+            | Özellik    | Değer |
+            |------------|-------|
+            | Cinsiyet   | {self.profil.get('cinsiyet', 'Belirtilmemiş')} |
+            | Yaş        | {self.profil.get('yas', 'Belirtilmemiş')} |
+            | Meslek     | {self.profil.get('meslek', 'Belirtilmemiş')} |
+            | Eğitim     | {self.profil.get('egitim', 'Belirtilmemiş')} |
+            | Boy        | {self.profil.get('boy', 'Belirtilmemiş')} |
+            | Kilo       | {self.profil.get('kilo', 'Belirtilmemiş')} |
 
-            VERİLEN ÜRÜN LİSTESİNDEN BAZI ÖRNEKLER:
+            **Ürün İsteği:**
+
+            | Kriter         | Değer |
+            |----------------|-------|
+            | Ürün Türü      | {self.urun_kutusu.currentText()} |
+            | Kullanım Amacı | {self.kullanim_kutusu.currentText()} |
+            | Bütçe          | {self.butce_kutusu.currentText()} |
+            | Marka Tercihi  | {self.marka_kutusu.currentText()} |
+
+            **Yanıt Kuralları:**
+
+            - İsteği dikkatlice analiz et.
+            - Eğer genel bir ürün kategorisiyse (örn. "telefon", "kulaklık"), genel bilgilerinden veya aşağıdaki örnek ürünlerden yola çıkarak önerilerde bulun.
+            - Kullanıcının özelliklerine ve kriterlerine uygun ürün önerileri ver, ardından daha fazla yardımcı olmak için soru sor.
+            - Önerdiğin ürünler hakkında kısa ve öz bilgi sun (örn. türü, öne çıkan özellikleri).
+            - Eğer uygun ürün bulamazsan, kullanıcıdan bütçe, marka, kullanım amacı gibi detaylar iste.
+            - Sohbet havasında yanıt ver, ancak bilgi odaklı ol.
+            - Eğer kullanıcı alışveriş dışı bir soru sorarsa, alışveriş asistanı olduğunu kibarca belirt ve konuya dön.
+
+            **Örnek Ürün Listesi:**
             {product_examples_str}
 
-            Kullanıcının isteği: "{message}"
+            **Kullanıcının İsteği:** "{message}"
 
             Senin yanıtın:
             """
+
 
             try:
                 gemini_response = self.chat_session.send_message(prompt_text)
@@ -711,7 +738,7 @@ class EntegreChatWindow(QMainWindow):
                         
                         if formatted_history:
                             self.konusma_gecmisi.extend(formatted_history)
-                            self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
+                            #self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
         except Exception as e:
             print(f"Geçmiş yükleme hatası: {e}")
 
@@ -719,12 +746,6 @@ class EntegreChatWindow(QMainWindow):
         try:
             self.konusma_gecmisi.clear()
             self.sonuc_kutusu.clear()
-            
-            # Dosyayı da temizle
-            dosya_adi = f"gecmisler/{self.kullanici_email}.txt"
-            if os.path.exists(dosya_adi):
-                os.remove(dosya_adi)
-                
             self.sonuc_kutusu.append("Asistan: Sohbet geçmişi temizlendi.")
             self.sonuc_kutusu.append("Asistan: Nasıl yardımcı olabilirim?")
         except Exception as e:
@@ -743,6 +764,34 @@ class EntegreChatWindow(QMainWindow):
             self.sonuc_kutusu.verticalScrollBar().setValue(self.sonuc_kutusu.verticalScrollBar().maximum())
             self.typing_timer.stop()
 
+    def mod_degistir(self):
+        if not self.gece_modu:
+            self.gece_modu = True
+            self.mod_butonu.setText("☀️ Gündüz Modu")
+
+            # Gece modu renkleri
+            palet = QPalette()
+            palet.setColor(QPalette.Window, QColor(53, 53, 53))
+            palet.setColor(QPalette.WindowText, Qt.white)
+            palet.setColor(QPalette.Base, QColor(35, 35, 35))
+            palet.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+            palet.setColor(QPalette.ToolTipBase, Qt.white)
+            palet.setColor(QPalette.ToolTipText, Qt.white)
+            palet.setColor(QPalette.Text, Qt.white)
+            palet.setColor(QPalette.Button, QColor(53, 53, 53))
+            palet.setColor(QPalette.ButtonText, Qt.white)
+            palet.setColor(QPalette.BrightText, Qt.red)
+            palet.setColor(QPalette.Link, QColor(42, 130, 218))
+            palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
+            palet.setColor(QPalette.HighlightedText, Qt.black)
+
+            QApplication.setPalette(palet)
+
+        else:
+            self.gece_modu = False
+            self.mod_butonu.setText("🌙 Gece Modu")
+            QApplication.setPalette(QApplication.style().standardPalette())        
+
     def cikis_yap(self):
         from girisEkrani import LoginRegisterWindow
         cevap = QMessageBox.question(self, "Çıkış Yap", "Giriş ekranına dönmek istiyor musunuz?",
@@ -758,6 +807,7 @@ class EntegreChatWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    QApplication.setPalette(QApplication.style().standardPalette())
     chat_window = EntegreChatWindow()
     chat_window.show()
     sys.exit(app.exec_())

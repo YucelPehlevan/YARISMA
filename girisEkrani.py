@@ -15,6 +15,7 @@ class LoginRegisterWindow(QMainWindow):
         self.setGeometry(100, 100, 1600, 900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
+        self.gece_modu = False
 
         self.initUI()
 
@@ -27,6 +28,11 @@ class LoginRegisterWindow(QMainWindow):
         self.kapat_butonu.setGeometry(100,700,200,100)
         self.kapat_butonu.setFont(degiskenler.buton_fontu)
         self.kapat_butonu.clicked.connect(self.cikis_yap)
+
+        self.mod_butonu = QPushButton("🌙 Gece Modu",self)
+        self.mod_butonu.setGeometry(1350,20,200,100)
+        self.mod_butonu.setFont(degiskenler.buton_fontu)
+        self.mod_butonu.clicked.connect(self.mod_degistir)
 
         self.initLoginForm()
         self.initRegisterForm()
@@ -125,17 +131,46 @@ class LoginRegisterWindow(QMainWindow):
         soru = QMessageBox().question(self,"Çıkış yap","Uygulamadan çıkmak istediğinize emin misiniz?",QMessageBox.Yes | QMessageBox.No) 
         if soru == QMessageBox.Yes:
             self.close()
-            sys.exit()  
+            sys.exit()
+
+    def mod_degistir(self):
+        if not self.gece_modu:
+            self.gece_modu = True
+            self.mod_butonu.setText("☀️ Gündüz Modu")
+
+            # Gece modu renkleri
+            palet = QPalette()
+            palet.setColor(QPalette.Window, QColor(53, 53, 53))
+            palet.setColor(QPalette.WindowText, Qt.white)
+            palet.setColor(QPalette.Base, QColor(35, 35, 35))
+            palet.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+            palet.setColor(QPalette.ToolTipBase, Qt.white)
+            palet.setColor(QPalette.ToolTipText, Qt.white)
+            palet.setColor(QPalette.Text, Qt.white)
+            palet.setColor(QPalette.Button, QColor(53, 53, 53))
+            palet.setColor(QPalette.ButtonText, Qt.white)
+            palet.setColor(QPalette.BrightText, Qt.red)
+            palet.setColor(QPalette.Link, QColor(42, 130, 218))
+            palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
+            palet.setColor(QPalette.HighlightedText, Qt.black)
+
+            QApplication.setPalette(palet)
+
+        else:
+            self.gece_modu = False
+            self.mod_butonu.setText("🌙 Gece Modu")
+            QApplication.setPalette(QApplication.style().standardPalette())
+             
   
     def giris_yap(self):
         email = self.giris_email_kutusu.text()
         sifre = self.giris_sifre_kutusu.text()
-        from chat import ChatWindow
+        from chat_entegre import EntegreChatWindow 
 
         if giris_kontrol(email,sifre):
             degiskenler.giris_durumu = True
             degiskenler.giris_yapan_email = email
-            self.konusma_penceresi = ChatWindow()
+            self.konusma_penceresi = EntegreChatWindow()
             self.hide()
             self.konusma_penceresi.show()
         else:
@@ -147,7 +182,7 @@ class LoginRegisterWindow(QMainWindow):
     def kayit_ol(self):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
-        from chat import ChatWindow 
+        from chat_entegre import EntegreChatWindow 
         
         if kullanici_var_mi(email):
             uyari = QMessageBox()
@@ -163,7 +198,7 @@ class LoginRegisterWindow(QMainWindow):
                                                 "kilo": self.kilo_kutusu.currentText()})
             degiskenler.giris_durumu = True
             degiskenler.giris_yapan_email = email
-            self.konusma_penceresi = ChatWindow()
+            self.konusma_penceresi = EntegreChatWindow()
             self.hide()
             self.konusma_penceresi.show()
         else:
@@ -174,6 +209,7 @@ class LoginRegisterWindow(QMainWindow):
 
 def main():
     uygulama = QApplication(sys.argv)
+    QApplication.setPalette(QApplication.style().standardPalette())
     pencere = LoginRegisterWindow()
     pencere.show()
     sys.exit(uygulama.exec_())
