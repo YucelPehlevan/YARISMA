@@ -6,52 +6,9 @@ from dotenv import load_dotenv
 import os
 from girisEkrani import *
 import degiskenler
-
+import sqlite3
+from veritabanı import urunleri_veritabanindan_al
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
-
-# Basit ürün veri seti
-urunler = {
-    "Samsung Galaxy S23": {
-        "fiyat": "35.000 TL",
-        "özellikler": "8 GB RAM, 128 GB hafıza, 50 MP kamera, 3900 mAh batarya"
-    },
-    "iPhone 14": {
-        "fiyat": "47.000 TL",
-        "özellikler": "6 GB RAM, 128 GB hafıza, 12 MP kamera, 3279 mAh batarya"
-    },
-    "Xiaomi Redmi Note 12": {
-        "fiyat": "10.500 TL",
-        "özellikler": "6 GB RAM, 128 GB hafıza, 50 MP kamera, 5000 mAh batarya"
-    },
-    "Realme C55": {
-        "fiyat": "8.200 TL",
-        "özellikler": "8 GB RAM, 256 GB hafıza, 64 MP kamera, 5000 mAh batarya"
-    },
-    "POCO X5 Pro": {
-        "fiyat": "13.500 TL",
-        "özellikler": "8 GB RAM, 256 GB hafıza, 108 MP kamera, Snapdragon 778G"
-    },
-    "Vestel Venus E5": {
-        "fiyat": "4.900 TL",
-        "özellikler": "3 GB RAM, 32 GB hafıza, 13 MP kamera, 4000 mAh batarya"
-    },
-    "Samsung Galaxy A34": {
-        "fiyat": "14.500 TL",
-        "özellikler": "6 GB RAM, 128 GB hafıza, 48 MP kamera, 5000 mAh batarya"
-    },
-    "iPhone SE (3. Nesil)": {
-        "fiyat": "26.000 TL",
-        "özellikler": "4 GB RAM, 64 GB hafıza, 12 MP kamera, A15 Bionic işlemci"
-    },
-    "Huawei Nova 9": {
-        "fiyat": "15.000 TL",
-        "özellikler": "8 GB RAM, 128 GB hafıza, 50 MP kamera, 66W hızlı şarj"
-    },
-    "General Mobile GM 24 Pro": {
-        "fiyat": "7.200 TL",
-        "özellikler": "8 GB RAM, 256 GB hafıza, 108 MP kamera, 5000 mAh batarya"
-    }
-}
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
@@ -59,15 +16,24 @@ api_key = os.getenv("GEMINI_API_KEY")
 class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 1600, 900)
+        self.setGeometry(100, 100, 1800, 900)
         self.setWindowTitle("Alışveriş Asistanı")
         self.setWindowIcon(QIcon("robot.png"))
 
         self.kullanici_email = degiskenler.giris_yapan_email
-        self.profil = kullanici_profili_al(self.kullanici_email) 
+        #self.profil = kullanici_profili_al(self.kullanici_email) 
         self.konusma_gecmisi = []
         self.chat = None
-        self.urunler = urunler
+        self.gece_modu = False
+        self.urunler = urunleri_veritabanindan_al()  # Liste olarak başlatıldı
+        
+        try:
+            self.kullanici_email = degiskenler.giris_yapan_email
+            from veritabanı import kullanici_profili_al
+            self.profil = kullanici_profili_al(self.kullanici_email)
+        except:
+            self.kullanici_email = "test@example.com"
+            self.profil = {}
 
         self.typing_timer = QTimer()
         self.typing_timer.timeout.connect(self.typeNextChar)
@@ -135,6 +101,11 @@ class ChatWindow(QMainWindow):
         self.cikis_butonu.setFont(degiskenler.buton_fontu)
         self.cikis_butonu.clicked.connect(self.cikis_yap)
 
+        self.mod_butonu = QPushButton("🌙 Gece Modu",self)
+        self.mod_butonu.setGeometry(1550,10,200,100)
+        self.mod_butonu.setFont(degiskenler.buton_fontu)
+        self.mod_butonu.clicked.connect(self.mod_degistir)
+
         self.temizleme_butonu = QPushButton("Sohbeti Sil", self)
         self.temizleme_butonu.setGeometry(50,725,150,50)
         self.temizleme_butonu.setFont(degiskenler.buton_fontu)
@@ -151,50 +122,74 @@ class ChatWindow(QMainWindow):
         if not kullanici_girdisi:
             return
 
-        # Gemini API
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        # Gemini API - dosyanın başına import ekleyin
+        if not hasattr(self, 'model'):
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                self.model = genai.GenerativeModel("models/gemini-2.0-flash")
+            except Exception as e:
+                QMessageBox.warning(self, "Hata", f"Gemini API hatası: {str(e)}")
+                return
 
+        # Ürün verilerini listeye göre formatla
         urun_verisi = ""
-        for urun, detay in self.urunler.items():
-            urun_verisi += f"{urun} - Fiyat: {detay['fiyat']}, Özellikler: {detay['özellikler']}\n"
+        for urun in self.urunler:
+            # urun tuple'ı: (urun_turu, marka, model, fiyat)
+            urun_turu, marka, model, fiyat = urun
+            urun_verisi += f"{urun_turu} - Marka: {marka}, Model: {model}, Fiyat: {fiyat}\n"
 
         prompt = f"""
-        Sen bir alışveriş asistanısın. Aşağıdaki ürünleri incele ve sadece kullanıcının ihtiyaçlarına uygun olanları öner. 
-        Kullanıcının ihtiyacını ve özelliklerini analiz et ve buna göre ürünleri filtrele. Hafızanı kullanarak önceki mesajları hatırla.
-        Eğer kullanıcı iki ürün arasında kalırsa 2 ürünü analiz edip 2si arasından bir öneri yap.
+        Sen uzman bir alışveriş danışmanısın. Kullanıcıya kişiselleştirilmiş ürün önerileri sunacaksın.
 
-        Ürün Listesi:
+        📋 GÖREV:
+        - Kullanıcının ihtiyaçlarını analiz et
+        - En uygun 2-3 ürün öner (fazla seçenek verme)
+        - Her önerinin nedenini açıkla
+        - Fiyat-performans değerlendirmesi yap
+
+        🛍️ MEVCUT ÜRÜNLER:
         {urun_verisi}
 
-        kullanıcı özellikleri:
-        - Cinsiyet: {self.profil.get('cinsiyet')}
-        - Yaş: {self.profil.get('yas')}
-        - Meslek: {self.profil.get('meslek')}
-        - Eğitim: {self.profil.get('egitim')}
-        - Boy: {self.profil.get('boy')}
-        - Kilo: {self.profil.get('kilo')}
+        👤 KULLANICI PROFİLİ:
+        - Cinsiyet: {self.profil.get('cinsiyet', 'Belirtilmemiş')}
+        - Yaş: {self.profil.get('yas', 'Belirtilmemiş')}
+        - Meslek: {self.profil.get('meslek', 'Belirtilmemiş')}
+        - Eğitim: {self.profil.get('egitim', 'Belirtilmemiş')}
+        - Fiziksel Özellikler: Boy {self.profil.get('boy', 'Belirtilmemiş')}, Kilo {self.profil.get('kilo', 'Belirtilmemiş')}
 
-        Ürün özellikleri:
-        - İstediği ürün: {self.urun_kutusu.currentText()} burdaki sonuca göre ürünler listende filtreleme yap
-        - Kullanım amacı: {self.kullanim_kutusu.currentText()}
-        - Bütçe: {self.butce_kutusu.currentText()} Eğer bütçe kısmı sadece '-' olarak gelirse bütçe öğrenmek için soru sorabilirsin yoksa bütçeyi yazdığı şekilde kabul et
-        - Marka Tercihi: {self.marka_kutusu.currentText()} Eğer marka kısmı farketmez olursa ekstra marka sorma
+        🎯 KULLANICI TALEPLERİ:
+        - Aranan Ürün: {self.urun_kutusu.currentText()}
+        - Kullanım Amacı: {self.kullanim_kutusu.currentText()}
+        - Bütçe: {self.butce_kutusu.currentText()}
+        - Marka Tercihi: {self.marka_kutusu.currentText()}
 
-        Kullanıcının mesajı:
-        "{kullanici_girdisi}"
+        💬 KULLANICI MESAJI: "{kullanici_girdisi}"
 
-        Cevabını uygun ürünleri, kullanıcı özelliklerini ve kullanıcı mesajını dikkate alarak ver. Gerekirse önce sorular sorabilirsin (örneğin telefon özelliği vs.).
+        📝 CEVAP FORMATI:
+        1. Kısa selamlama ve ihtiyaç özetı
+        2. En uygun 2-3 ürün önerisi (her biri için liste halinde):
+           - Ürün adı ve fiyatı
+           - Neden bu ürün? (kişisel özelliklerine uygunluk)
+           - Artı/eksi yönleri
+        3. Final önerisi ve nedeni
+        4. Ek sorular (gerekirse)
+
+
+        ⚡ KURALLAR:
+        - Her cümle sonrası 2 satır atla
+        - Samimi ve profesyonel ol
+        - Sadece mevcut ürünlerden öner
+        - Bütçe '-' ise bütçe sor
+        - Marka 'Farketmez' ise marka sorma
+        - Çok detaya girme, net ol
+        - Emojiler kullan ama abartma
         """
 
         if self.chat is None:
-            self.chat = model.start_chat(history=[])
-        try:
-            cevap = self.chat.send_message(prompt)
-        except Exception as e:
-            QMessageBox.warning(self, "Hata", f"AI servisinde hata: {str(e)}")
-            return
+            self.chat = self.model.start_chat(history=[])
+        
+        cevap = self.chat.send_message(prompt)
         self.sohbeti_kaydet(kullanici_girdisi, cevap.text)
 
         # Kullanıcı mesajı hemen gösterilir
@@ -234,7 +229,35 @@ class ChatWindow(QMainWindow):
 
     def sohbet_gecmisini_temizle(self):
         self.konusma_gecmisi.clear()
-        self.sonuc_kutusu.clear()                    
+        self.sonuc_kutusu.clear()
+
+    def mod_degistir(self):
+        if not self.gece_modu:
+            self.gece_modu = True
+            self.mod_butonu.setText("☀️ Gündüz Modu")
+
+            # Gece modu renkleri
+            palet = QPalette()
+            palet.setColor(QPalette.Window, QColor(53, 53, 53))
+            palet.setColor(QPalette.WindowText, Qt.white)
+            palet.setColor(QPalette.Base, QColor(35, 35, 35))
+            palet.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+            palet.setColor(QPalette.ToolTipBase, Qt.white)
+            palet.setColor(QPalette.ToolTipText, Qt.white)
+            palet.setColor(QPalette.Text, Qt.white)
+            palet.setColor(QPalette.Button, QColor(53, 53, 53))
+            palet.setColor(QPalette.ButtonText, Qt.white)
+            palet.setColor(QPalette.BrightText, Qt.red)
+            palet.setColor(QPalette.Link, QColor(42, 130, 218))
+            palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
+            palet.setColor(QPalette.HighlightedText, Qt.black)
+
+            QApplication.setPalette(palet)
+
+        else:
+            self.gece_modu = False
+            self.mod_butonu.setText("🌙 Gece Modu")
+            QApplication.setPalette(QApplication.style().standardPalette())                               
 
     def typeNextChar(self):
         if self.typing_index < len(self.typing_text):
@@ -257,6 +280,7 @@ class ChatWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    app.setPalette(QApplication.style().standardPalette())
     giris_ekrani = ChatWindow()
     giris_ekrani.show()
     sys.exit(app.exec_())

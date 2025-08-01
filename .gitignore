@@ -7,3 +7,5 @@ __pycache__/
 *.pyc
 gecmisler/
 data/
+veritabani.db
+veritabani.py

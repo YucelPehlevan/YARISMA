@@ -16,6 +16,7 @@ import seaborn as sns # İsteğe bağlı, daha güzel grafikler için
 import nltk
 from nltk.corpus import stopwords
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from veritabani import veritabani_olustur
 
 # --- Ortam Değişkenleri ve API Anahtarları ---
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
@@ -295,7 +296,7 @@ class EntegreChatWindow(QMainWindow):
         self.yazi_kutusu = QTextEdit(self)
         self.yazi_kutusu.setFont(font)
         self.yazi_kutusu.setGeometry(300, 55, 1200, 300)
-        self.yazi_kutusu.setPlaceholderText("Bugün ne aramak isterdiniz? (örn: 'telefon', 'bluetooth kulaklık') veya 'en popüler' yazın...")
+        self.yazi_kutusu.setPlaceholderText("Bugün ne aramak isterdiniz")
 
         # Sol taraf filtre alanları
         # Ürün seçimi
@@ -357,7 +358,7 @@ class EntegreChatWindow(QMainWindow):
         self.sonuc_kutusu.setFont(font)
         self.sonuc_kutusu.setGeometry(300, 440, 1200, 450)
         self.sonuc_kutusu.append("Asistan: Merhaba! Alışveriş asistanına hoş geldiniz.")
-        self.sonuc_kutusu.append("Asistan: Ürün verileri yükleniyor, lütfen bekleyiniz...")
+        #self.sonuc_kutusu.append("Asistan: Ürün verileri yükleniyor, lütfen bekleyiniz...")
 
         # Alt kısım butonları
         self.cikis_butonu = QPushButton("Çıkış Yap", self)
@@ -440,16 +441,16 @@ class EntegreChatWindow(QMainWindow):
             self.data_thread.load_error.connect(self.on_data_load_error)
             self.data_thread.start()
         else:
-            self.sonuc_kutusu.append("Asistan: Ürün verileri zaten yüklü.")
+            #self.sonuc_kutusu.append("Asistan: Ürün verileri zaten yüklü.")
             self.sonuc_kutusu.append(
-                "Asistan: Nasıl yardımcı olabilirim? (Örn: 'en popüler', 'telefon', 'bluetooth kulaklık')")
+                "Asistan: Nasıl yardımcı olabilirim?")
 
     def on_data_loaded(self, df):
         global df_products
         df_products = df
-        self.sonuc_kutusu.append("Asistan: Ürün verileri başarıyla yüklendi!")
+        #self.sonuc_kutusu.append("Asistan: Ürün verileri başarıyla yüklendi!")
         self.sonuc_kutusu.append(
-            "Asistan: Nasıl yardımcı olabilirim? (Örn: 'en popüler', 'telefon', 'bluetooth kulaklık')")
+            "Asistan: Nasıl yardımcı olabilirim?")
 
     def on_data_load_error(self, error_msg):
         self.sonuc_kutusu.append(f"Asistan: Veri yüklenirken bir hata oluştu: {error_msg}")
@@ -536,8 +537,6 @@ class EntegreChatWindow(QMainWindow):
             **Veritabanı Bilgisi:**
             Şu anda aşağıdaki kategorilerde ürünlerimiz bulunmaktadır:
             {categories_str}
-
-            Özellikle 'wireless' kategorisinde telefon, tablet aksesuarı, bluetooth cihazlar, kılıflar, kulaklıklar gibi birçok ürün mevcuttur.
 
             **Kullanıcı Özellikleri:**
 

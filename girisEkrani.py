@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import os
 import degiskenler
-from veriYonetimi import *
+
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
@@ -165,12 +165,13 @@ class LoginRegisterWindow(QMainWindow):
     def giris_yap(self):
         email = self.giris_email_kutusu.text()
         sifre = self.giris_sifre_kutusu.text()
-        from chat_entegre import EntegreChatWindow 
+        from chat import ChatWindow
+        from veritabanı import giris_kontrol
 
         if giris_kontrol(email,sifre):
             degiskenler.giris_durumu = True
             degiskenler.giris_yapan_email = email
-            self.konusma_penceresi = EntegreChatWindow()
+            self.konusma_penceresi = ChatWindow()
             self.hide()
             self.konusma_penceresi.show()
         else:
@@ -183,19 +184,25 @@ class LoginRegisterWindow(QMainWindow):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
         from chat_entegre import EntegreChatWindow 
+        from veritabanı import kullanici_ekle,giris_kontrol
         
-        if kullanici_var_mi(email):
+        if giris_kontrol(email,sifre):
             uyari = QMessageBox()
             uyari.setWindowTitle("Kayıt Başarısız")
             uyari.setText("Bu maile ait kayıtlı bir hesap bulunmaktadır")
             uyari.exec_()
         elif any(email.endswith(kelime) for kelime in ["@gmail.com", "@hotmail.com", "@outlook.com"]) and len(sifre) >= 6 and " " not in email and " " not in sifre: 
+            '''
             kullanici_ekle(email,sifre,profil={"cinsiyet": self.cinsiyet_kutusu.currentText(),
                                                 "meslek": self.meslek_kutusu.currentText(),
                                                 "egitim": self.egitim_kutusu.currentText(),
                                                 "yas": self.yas_kutusu.currentText(),
                                                 "boy": self.boy_kutusu.currentText(),
                                                 "kilo": self.kilo_kutusu.currentText()})
+            '''
+            kullanici_ekle(email,sifre,self.cinsiyet_kutusu.currentText(),self.meslek_kutusu.currentText(),self.egitim_kutusu.currentText(),
+                           self.yas_kutusu.currentText(),self.boy_kutusu.currentText(),self.kilo_kutusu.currentText())
+            
             degiskenler.giris_durumu = True
             degiskenler.giris_yapan_email = email
             self.konusma_penceresi = EntegreChatWindow()
