@@ -7,7 +7,7 @@ import os
 from girisEkrani import *
 import degiskenler
 import sqlite3
-from veritabanı import urunleri_veritabanindan_al
+from veritabani import urunleri_veritabanindan_al
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
 load_dotenv()
@@ -29,7 +29,7 @@ class ChatWindow(QMainWindow):
         
         try:
             self.kullanici_email = degiskenler.giris_yapan_email
-            from veritabanı import kullanici_profili_al
+            from veritabani import kullanici_profili_al
             self.profil = kullanici_profili_al(self.kullanici_email)
         except:
             self.kullanici_email = "test@example.com"
@@ -168,16 +168,15 @@ class ChatWindow(QMainWindow):
 
         📝 CEVAP FORMATI:
         1. Kısa selamlama ve ihtiyaç özetı
-        2. En uygun 2-3 ürün önerisi (her biri için liste halinde):
+        2. En uygun 2-3 ürün önerisi (her biri için):
            - Ürün adı ve fiyatı
            - Neden bu ürün? (kişisel özelliklerine uygunluk)
            - Artı/eksi yönleri
         3. Final önerisi ve nedeni
         4. Ek sorular (gerekirse)
-
+        
 
         ⚡ KURALLAR:
-        - Her cümle sonrası 2 satır atla
         - Samimi ve profesyonel ol
         - Sadece mevcut ürünlerden öner
         - Bütçe '-' ise bütçe sor

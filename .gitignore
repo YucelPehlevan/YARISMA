@@ -9,3 +9,4 @@ gecmisler/
 data/
 *.db
 veritabani.py
+urunler.py

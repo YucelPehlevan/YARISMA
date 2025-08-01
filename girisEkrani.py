@@ -166,7 +166,7 @@ class LoginRegisterWindow(QMainWindow):
         email = self.giris_email_kutusu.text()
         sifre = self.giris_sifre_kutusu.text()
         from chat import ChatWindow
-        from veritabanı import giris_kontrol
+        from veritabani import giris_kontrol
 
         if giris_kontrol(email,sifre):
             degiskenler.giris_durumu = True
@@ -184,7 +184,7 @@ class LoginRegisterWindow(QMainWindow):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
         from chat_entegre import EntegreChatWindow 
-        from veritabanı import kullanici_ekle,giris_kontrol
+        from veritabani import kullanici_ekle,giris_kontrol
         
         if giris_kontrol(email,sifre):
             uyari = QMessageBox()
