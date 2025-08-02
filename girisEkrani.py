@@ -5,7 +5,9 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import os
 import degiskenler
+from dotenv import load_dotenv
 
+load_dotenv()
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
@@ -183,36 +185,46 @@ class LoginRegisterWindow(QMainWindow):
     def kayit_ol(self):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
-        from chat_entegre import EntegreChatWindow 
-        from veritabani import kullanici_ekle,giris_kontrol
-        
-        if giris_kontrol(email,sifre):
-            uyari = QMessageBox()
-            uyari.setWindowTitle("Kayıt Başarısız")
-            uyari.setText("Bu maile ait kayıtlı bir hesap bulunmaktadır")
-            uyari.exec_()
-        elif any(email.endswith(kelime) for kelime in ["@gmail.com", "@hotmail.com", "@outlook.com"]) and len(sifre) >= 6 and " " not in email and " " not in sifre: 
-            '''
-            kullanici_ekle(email,sifre,profil={"cinsiyet": self.cinsiyet_kutusu.currentText(),
-                                                "meslek": self.meslek_kutusu.currentText(),
-                                                "egitim": self.egitim_kutusu.currentText(),
-                                                "yas": self.yas_kutusu.currentText(),
-                                                "boy": self.boy_kutusu.currentText(),
-                                                "kilo": self.kilo_kutusu.currentText()})
-            '''
-            kullanici_ekle(email,sifre,self.cinsiyet_kutusu.currentText(),self.meslek_kutusu.currentText(),self.egitim_kutusu.currentText(),
-                           self.yas_kutusu.currentText(),self.boy_kutusu.currentText(),self.kilo_kutusu.currentText())
-            
-            degiskenler.giris_durumu = True
-            degiskenler.giris_yapan_email = email
-            self.konusma_penceresi = EntegreChatWindow()
-            self.hide()
-            self.konusma_penceresi.show()
+        from chat import ChatWindow 
+        from veritabani import kullanici_ekle, kullanici_var_mi
+        from email_yonetimi import dogrulama_kodu_gonder
+
+        if kullanici_var_mi(email):
+            QMessageBox.warning(self, "Kayıt Başarısız", "Bu maile ait kayıtlı bir hesap bulunmaktadır.")
+            return
+
+        if any(email.endswith(kelime) for kelime in ["@gmail.com", "@hotmail.com", "@outlook.com"]) and len(sifre) >= 6 and " " not in email and " " not in sifre:
+            # Şifre ve mail geçerli, şimdi doğrulama kodu gönder
+            gmail_adresi = os.getenv("EMAIL_ADRESI")
+            gmail_sifresi = os.getenv("EMAIL_SIFRE")
+            kod = dogrulama_kodu_gonder(email, gmail_adresi, gmail_sifresi)
+
+            if not kod:
+                QMessageBox.warning(self, "Hata", "Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.")
+                return
+
+            girilen_kod, ok = QInputDialog.getText(self, "Doğrulama", "E-posta adresinize gelen doğrulama kodunu girin:")
+            if ok and girilen_kod == kod:
+                # Başarılı doğrulama
+                kullanici_ekle(
+                    email, sifre,
+                    self.cinsiyet_kutusu.currentText(),
+                    self.meslek_kutusu.currentText(),
+                    self.egitim_kutusu.currentText(),
+                    self.yas_kutusu.currentText(),
+                    self.boy_kutusu.currentText(),
+                    self.kilo_kutusu.currentText()
+                )
+                degiskenler.giris_durumu = True
+                degiskenler.giris_yapan_email = email
+                self.konusma_penceresi = ChatWindow()
+                self.hide()
+                self.konusma_penceresi.show()
+            else:
+                QMessageBox.warning(self, "Hata", "Doğrulama kodu yanlış veya işlem iptal edildi.")
         else:
-            uyari = QMessageBox()
-            uyari.setWindowTitle("Kayıt Başarısız")
-            uyari.setText("Lütfen geçerli bir e-posta adresi ve en az 6 haneli bir şifre girin.Ayrıca boşluk karakterini kullanmayın")
-            uyari.exec_()                     
+            QMessageBox.warning(self, "Kayıt Başarısız", "Geçerli bir e-posta ve en az 6 karakterli şifre girin. Boşluk karakteri kullanmayın.")
+                        
 
 def main():
     uygulama = QApplication(sys.argv)

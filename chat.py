@@ -112,6 +112,9 @@ class ChatWindow(QMainWindow):
         self.temizleme_butonu.clicked.connect(self.sohbet_gecmisini_temizle) 
 
         self.sonuc_kutusu = QTextEdit(self)
+        # Gece modu için CSS ayarı
+        if self.gece_modu:
+            self.sonuc_kutusu.setStyleSheet("QTextEdit { background-color: #2b2b2b; color: white; }")
         self.sonuc_kutusu.setReadOnly(True)
         self.sonuc_kutusu.setFont(font)
         self.sonuc_kutusu.setGeometry(300, 400, 1200, 450)
@@ -183,6 +186,7 @@ class ChatWindow(QMainWindow):
         - Marka 'Farketmez' ise marka sorma
         - Çok detaya girme, net ol
         - Emojiler kullan ama abartma
+        - Eğer kulanıcı bir ürünü almaya karar verirse kısa ve samimi bir dille doğru kararı verdiği söyle
         """
 
         if self.chat is None:
@@ -197,7 +201,9 @@ class ChatWindow(QMainWindow):
         self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
 
         # Typing efekt verisi
-        self.typing_text = cevap.text
+        formatli_cevap = self.ai_cevabini_formatla(cevap.text)
+        self.typing_text = formatli_cevap
+
         self.typing_index = 0
         self.typing_timer.start(15)
 
@@ -217,6 +223,46 @@ class ChatWindow(QMainWindow):
             f.write(f"Kullanıcı: {kullanici_girdi}\n")
             f.write(f"Asistan: {asistan_cevabi}\n\n")
 
+    def ai_cevabini_formatla(self, metin):
+        """AI'dan gelen metni HTML formatına çevirir"""
+        
+        # Başlık olacak kalıpları tanımla
+        baslik_kaliplari = [
+            "**Öneriler:**",
+            "**Neden bu ürün?**", 
+            "**Artıları:**",
+            "**Eksileri:**",
+            "**Final Önerisi:**",
+            "**Avantajları:**",
+            "**Dezavantajları:**"
+        ]
+        
+        # Her başlık kalıbını HTML başlığına çevir
+        for kalip in baslik_kaliplari:
+            temiz_baslik = kalip.replace("**", "").replace("*", "")
+            
+            # Gece modu kontrolü
+            if self.gece_modu:
+                renk = "white"
+            else:
+                renk = "black"
+                
+            html_baslik = f"<h3 style='color: {renk}; font-size: 16px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>{temiz_baslik}</h3>"
+            metin = metin.replace(kalip, f"<br>{html_baslik}")
+        
+        # Ürün isimlerini ayrı satıra al - güçlü regex
+        import re
+        # 1. Acer Nitro 5 (28.600 TL) formatını yakala
+        metin = re.sub(r'(\d+\.)\s+([A-Za-zÇĞIİÖŞÜçğıiöşü\s\d\-]+(?:\([^)]*\))?)', r'<br><b>\1 \2</b>', metin)
+        
+        # Diğer ** kalın yazıları normal HTML bold'a çevir
+        metin = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', metin)
+        
+        # *** üçlü yıldızları da işle
+        metin = re.sub(r'\*\*\*(.*?)\*\*', r'<b>\1</b>', metin)
+        
+        return metin  
+
     def gecmisi_yukle(self):
         dosya_adi = f"gecmisler/{degiskenler.giris_yapan_email}.txt"
         if os.path.exists(dosya_adi):
@@ -231,6 +277,7 @@ class ChatWindow(QMainWindow):
         self.sonuc_kutusu.clear()
 
     def mod_degistir(self):
+        mevcut_html = self.sonuc_kutusu.toHtml()
         if not self.gece_modu:
             self.gece_modu = True
             self.mod_butonu.setText("☀️ Gündüz Modu")
@@ -250,14 +297,17 @@ class ChatWindow(QMainWindow):
             palet.setColor(QPalette.Link, QColor(42, 130, 218))
             palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
             palet.setColor(QPalette.HighlightedText, Qt.black)
-
-            QApplication.setPalette(palet)
+            mevcut_html = mevcut_html.replace("color: black;", "color: white;")
+            QApplication.setPalette(palet)                              
 
         else:
             self.gece_modu = False
             self.mod_butonu.setText("🌙 Gece Modu")
-            QApplication.setPalette(QApplication.style().standardPalette())                               
+            mevcut_html = mevcut_html.replace("color: white;", "color: black;")
+            QApplication.setPalette(QApplication.style().standardPalette())
 
+        self.sonuc_kutusu.setHtml(mevcut_html)    
+           
     def typeNextChar(self):
         if self.typing_index < len(self.typing_text):
             metin = self.typing_text[:self.typing_index + 1]
