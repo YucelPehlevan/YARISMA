@@ -96,8 +96,13 @@ class ChatWindow(QMainWindow):
         self.mesaj_butonu.setFont(degiskenler.buton_fontu)
         self.mesaj_butonu.clicked.connect(self.sendMessage)
 
+        self.oneri_butonu = QPushButton("Önerileri Göster", self)
+        self.oneri_butonu.setGeometry(50, 610, 200, 70)
+        self.oneri_butonu.setFont(degiskenler.buton_fontu)
+        self.oneri_butonu.clicked.connect(self.onceki_onerileri_goster)
+
         self.cikis_butonu = QPushButton("Çıkış Yap", self)
-        self.cikis_butonu.setGeometry(50, 800, 150, 50)
+        self.cikis_butonu.setGeometry(50, 780, 200, 70)
         self.cikis_butonu.setFont(degiskenler.buton_fontu)
         self.cikis_butonu.clicked.connect(self.cikis_yap)
 
@@ -107,7 +112,7 @@ class ChatWindow(QMainWindow):
         self.mod_butonu.clicked.connect(self.mod_degistir)
 
         self.temizleme_butonu = QPushButton("Sohbeti Sil", self)
-        self.temizleme_butonu.setGeometry(50,725,150,50)
+        self.temizleme_butonu.setGeometry(50,695,200,70)
         self.temizleme_butonu.setFont(degiskenler.buton_fontu)
         self.temizleme_butonu.clicked.connect(self.sohbet_gecmisini_temizle) 
 
@@ -118,13 +123,23 @@ class ChatWindow(QMainWindow):
         self.sonuc_kutusu.setReadOnly(True)
         self.sonuc_kutusu.setFont(font)
         self.sonuc_kutusu.setGeometry(300, 400, 1200, 450)
-        self.gecmisi_yukle()
+        self.sonuc_kutusu.append("Asistan: Merhaba! Alışveriş asistanına hoş geldiniz.")
+        self.sonuc_kutusu.append("Asistan: Nasıl yardımcı olabilirim?")
+        #self.gecmisi_yukle()
 
     def sendMessage(self):
         kullanici_girdisi = self.yazi_kutusu.toPlainText().strip()
         if not kullanici_girdisi:
             return
+        """
+        self.konusma_gecmisi.append(f"<b><span style='color:#007bff;'>Siz:</span></b> {kullanici_girdisi}")
+        self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
+        self.yazi_kutusu.clear()
 
+        self.konusma_gecmisi.append(f"<b><span style='color:#6c757d;'>Asistan:</span></b> Yanıtınız hazırlanıyor...")
+        self.sonuc_kutusu.setHtml("<br><br>".join(self.konusma_gecmisi))
+        QApplication.processEvents()
+        """
         # Gemini API - dosyanın başına import ekleyin
         if not hasattr(self, 'model'):
             try:
@@ -207,8 +222,6 @@ class ChatWindow(QMainWindow):
         self.typing_index = 0
         self.typing_timer.start(15)
 
-        self.yazi_kutusu.clear()
-    
     def urun_degistir(self,secilen_urun):
         self.marka_kutusu.clear()
         self.kullanim_kutusu.clear()
@@ -266,6 +279,31 @@ class ChatWindow(QMainWindow):
     def sohbet_gecmisini_temizle(self):
         self.konusma_gecmisi.clear()
         self.sonuc_kutusu.clear()
+
+    def onceki_onerileri_goster(self):
+        import os
+
+        email = degiskenler.giris_yapan_email
+        dosya_yolu = f"gecmisler/{email}.txt"
+        self.sonuc_kutusu.clear()
+        if not os.path.exists(dosya_yolu):
+            self.sonuc_kutusu.append("Daha önceki önerilere ulaşılamadı.")
+            return
+
+        with open(dosya_yolu, "r", encoding="utf-8") as dosya:
+            satirlar = dosya.readlines()
+
+        oneriler = []
+        for i, satir in enumerate(satirlar):
+            if satir.startswith("1.") or satir.startswith("2.") or satir.startswith("3.") or satir.startswith("**1.") or satir.startswith("**2.") or satir.startswith("**3."):
+                oneriler.append(satirlar[i].strip())  # Asıl ürün listesi bir sonraki satırda olabilir
+
+        if oneriler:
+            mesaj = "İşte önceki bazı ürün önerilerin:\n\n" + "\n".join(f"• {o}" for o in oneriler[:])  # Son 5 tanesi
+        else:
+            mesaj = "Daha önce sana özel bir ürün önerisi sunulmamış."
+        self.sonuc_kutusu.append(mesaj)
+    
 
     def mod_degistir(self):
         mevcut_html = self.sonuc_kutusu.toHtml()
