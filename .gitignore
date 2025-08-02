@@ -10,3 +10,5 @@ data/
 *.db
 veritabani.py
 urunler.py
+chat.py
+chat_entegre.py
