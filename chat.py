@@ -237,28 +237,19 @@ class ChatWindow(QMainWindow):
             "**Dezavantajları:**"
         ]
         
-        # Her başlık kalıbını HTML başlığına çevir
+        # Her başlık kalıbını HTML başlığına çevir - CSS class kullan
         for kalip in baslik_kaliplari:
             temiz_baslik = kalip.replace("**", "").replace("*", "")
-            
-            # Gece modu kontrolü
-            if self.gece_modu:
-                renk = "white"
-            else:
-                renk = "black"
-                
-            html_baslik = f"<h3 style='color: {renk}; font-size: 16px; font-weight: bold; margin-top: 0px; margin-bottom: 0px;'>{temiz_baslik}</h3>"
+            # CSS class ile - inline style yerine
+            html_baslik = f"<h3 class='baslik-stili'>{temiz_baslik}</h3>"
             metin = metin.replace(kalip, f"<br>{html_baslik}")
         
-        # Ürün isimlerini ayrı satıra al - güçlü regex
+        # Ürün isimlerini ayrı satıra al
         import re
-        # 1. Acer Nitro 5 (28.600 TL) formatını yakala
         metin = re.sub(r'(\d+\.)\s+([A-Za-zÇĞIİÖŞÜçğıiöşü\s\d\-]+(?:\([^)]*\))?)', r'<br><b>\1 \2</b>', metin)
         
         # Diğer ** kalın yazıları normal HTML bold'a çevir
         metin = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', metin)
-        
-        # *** üçlü yıldızları da işle
         metin = re.sub(r'\*\*\*(.*?)\*\*', r'<b>\1</b>', metin)
         
         return metin  
@@ -282,6 +273,18 @@ class ChatWindow(QMainWindow):
             self.gece_modu = True
             self.mod_butonu.setText("☀️ Gündüz Modu")
 
+            self.sonuc_kutusu.setStyleSheet("""
+            QTextEdit {
+                background-color: #2b2b2b;
+                color: white;
+            }
+            .baslik-stili {
+                color: white !important;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            """)
+
             # Gece modu renkleri
             palet = QPalette()
             palet.setColor(QPalette.Window, QColor(53, 53, 53))
@@ -303,6 +306,18 @@ class ChatWindow(QMainWindow):
         else:
             self.gece_modu = False
             self.mod_butonu.setText("🌙 Gece Modu")
+
+            self.sonuc_kutusu.setStyleSheet("""
+            QTextEdit {
+                background-color: white;
+                color: black;
+            }
+            .baslik-stili {
+                color: black !important;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            """)                                
             mevcut_html = mevcut_html.replace("color: white;", "color: black;")
             QApplication.setPalette(QApplication.style().standardPalette())
 
