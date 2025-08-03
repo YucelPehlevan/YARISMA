@@ -26,15 +26,17 @@ class LoginRegisterWindow(QMainWindow):
         self.yazi.setFont(degiskenler.baslik_fontu)
         self.yazi.setGeometry(300,100,1200,100)
         
-        self.kapat_butonu = QPushButton("Çıkış Yap",self)
-        self.kapat_butonu.setGeometry(100,700,200,100)
-        self.kapat_butonu.setFont(degiskenler.buton_fontu)
-        self.kapat_butonu.clicked.connect(self.cikis_yap)
+        self.cikis_butonu = QPushButton("Çıkış Yap",self)
+        self.cikis_butonu.setGeometry(100,700,200,100)
+        self.cikis_butonu.setFont(degiskenler.buton_fontu)
+        self.cikis_butonu.clicked.connect(self.cikis_yap)
+        self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)    
 
         self.mod_butonu = QPushButton("🌙 Gece Modu",self)
         self.mod_butonu.setGeometry(1350,20,200,100)
         self.mod_butonu.setFont(degiskenler.buton_fontu)
         self.mod_butonu.clicked.connect(self.mod_degistir)
+        self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
 
         self.initLoginForm()
         self.initRegisterForm()
@@ -43,7 +45,8 @@ class LoginRegisterWindow(QMainWindow):
         self.giris_butonu = QPushButton("Giriş Yap",self)
         self.giris_butonu.setGeometry(400,250,200,100)
         self.giris_butonu.setFont(degiskenler.buton_fontu)
-        self.giris_butonu.clicked.connect(self.giris_yap) 
+        self.giris_butonu.clicked.connect(self.giris_yap)
+        self.giris_butonu.setStyleSheet(degiskenler.buton_stili) 
 
         self.email_yazisi = QLabel("Email: ",self)
         self.email_yazisi.setFont(degiskenler.yazi_fontu)
@@ -52,6 +55,7 @@ class LoginRegisterWindow(QMainWindow):
         self.giris_email_kutusu = QLineEdit(self)
         self.giris_email_kutusu.setGeometry(375,370,250,50)
         self.giris_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
+        self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
 
         self.sifre_yazisi = QLabel("Şifre: ",self)
         self.sifre_yazisi.setFont(degiskenler.yazi_fontu)
@@ -60,20 +64,24 @@ class LoginRegisterWindow(QMainWindow):
         self.giris_sifre_kutusu = QLineEdit(self)
         self.giris_sifre_kutusu.setGeometry(375,470,250,50)
         self.giris_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
+        self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
 
     def initRegisterForm(self):
         self.kayit_butonu = QPushButton("Kayıt Ol",self)
-        self.kayit_butonu.setGeometry(950,250,200,100)
+        self.kayit_butonu.setGeometry(1000,250,200,100)
         self.kayit_butonu.setFont(degiskenler.buton_fontu)
         self.kayit_butonu.clicked.connect(self.kayit_ol)
+        self.kayit_butonu.setStyleSheet(degiskenler.buton_stili)
 
         self.kayit_email_kutusu = QLineEdit(self)
-        self.kayit_email_kutusu.setGeometry(925,370,250,50)
+        self.kayit_email_kutusu.setGeometry(975,370,250,50)
         self.kayit_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
+        self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
 
         self.kayit_sifre_kutusu = QLineEdit(self)
-        self.kayit_sifre_kutusu.setGeometry(925,470,250,50)
+        self.kayit_sifre_kutusu.setGeometry(975,470,250,50)
         self.kayit_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
+        self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
 
         self.cinsiyet_yazisi = QLabel("Cinsiyetiniz: ",self)
         self.cinsiyet_yazisi.setFont(degiskenler.yazi_fontu)
@@ -83,6 +91,7 @@ class LoginRegisterWindow(QMainWindow):
         self.cinsiyet_kutusu.addItems(["Kadın","Erkek"])
         self.cinsiyet_kutusu.setGeometry(880,540,150,50)
         self.cinsiyet_kutusu.setFont(degiskenler.yazi_fontu)
+        self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.meslek_yazisi = QLabel("Mesleğiniz: ",self)
         self.meslek_yazisi.setFont(degiskenler.yazi_fontu)
@@ -92,6 +101,7 @@ class LoginRegisterWindow(QMainWindow):
         self.meslek_kutusu.addItems(degiskenler.meslek_listesi)
         self.meslek_kutusu.setGeometry(880,640,150,50)
         self.meslek_kutusu.setFont(degiskenler.yazi_fontu)
+        self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.egitim_yazisi = QLabel("    Eğitim\nDurumunuz: ",self)
         self.egitim_yazisi.setFont(degiskenler.yazi_fontu)
@@ -101,6 +111,7 @@ class LoginRegisterWindow(QMainWindow):
         self.egitim_kutusu.addItems(degiskenler.egitim_listesi)
         self.egitim_kutusu.setGeometry(880,740,150,50)
         self.egitim_kutusu.setFont(degiskenler.yazi_fontu)
+        self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.yas_yazisi = QLabel("    Yaş\nAralığınız: ",self)
         self.yas_yazisi.setFont(degiskenler.yazi_fontu)
@@ -110,6 +121,7 @@ class LoginRegisterWindow(QMainWindow):
         self.yas_kutusu.addItems(degiskenler.yas_listesi)
         self.yas_kutusu.setGeometry(1150,540,150,50)
         self.yas_kutusu.setFont(degiskenler.yazi_fontu)
+        self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.boy_yazisi = QLabel("    Boy\nAralığınız: ",self)
         self.boy_yazisi.setFont(degiskenler.yazi_fontu)
@@ -119,6 +131,7 @@ class LoginRegisterWindow(QMainWindow):
         self.boy_kutusu.addItems(degiskenler.boy_listesi)
         self.boy_kutusu.setGeometry(1150,650,150,50)
         self.boy_kutusu.setFont(degiskenler.yazi_fontu)
+        self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.kilo_yazisi = QLabel("    Kilo\nAralığınız: ",self)
         self.kilo_yazisi.setFont(degiskenler.yazi_fontu)
@@ -128,6 +141,7 @@ class LoginRegisterWindow(QMainWindow):
         self.kilo_kutusu.addItems(degiskenler.kilo_listesi)
         self.kilo_kutusu.setGeometry(1150,750,150,50)
         self.kilo_kutusu.setFont(degiskenler.yazi_fontu)
+        self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
     def cikis_yap(self):
         soru = QMessageBox().question(self,"Çıkış yap","Uygulamadan çıkmak istediğinize emin misiniz?",QMessageBox.Yes | QMessageBox.No) 
@@ -155,19 +169,51 @@ class LoginRegisterWindow(QMainWindow):
             palet.setColor(QPalette.Link, QColor(42, 130, 218))
             palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
             palet.setColor(QPalette.HighlightedText, Qt.black)
-
             QApplication.setPalette(palet)
+
+            self.kayit_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.giris_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.mod_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+
+            self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
+            self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
+            self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
+            self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
+
+            self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)                              
 
         else:
             self.gece_modu = False
             self.mod_butonu.setText("🌙 Gece Modu")
             QApplication.setPalette(QApplication.style().standardPalette())
-             
-  
+
+            self.kayit_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.giris_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)
+
+            self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+            self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+            self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+            self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+
+            self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili)
+
     def giris_yap(self):
         email = self.giris_email_kutusu.text()
         sifre = self.giris_sifre_kutusu.text()
-        from chat import ChatWindow
+        from chatEkrani import ChatWindow
         from veritabani import giris_kontrol
 
         if giris_kontrol(email,sifre):
@@ -185,7 +231,7 @@ class LoginRegisterWindow(QMainWindow):
     def kayit_ol(self):
         email = self.kayit_email_kutusu.text()
         sifre = self.kayit_sifre_kutusu.text()
-        from chat import ChatWindow 
+        from chatEkrani import ChatWindow 
         from veritabani import kullanici_ekle, kullanici_var_mi
         from email_yonetimi import dogrulama_kodu_gonder
 

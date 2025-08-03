@@ -82,6 +82,7 @@ class ChatWindow(QMainWindow):
         self.urun_kutusu.setFont(degiskenler.yazi_fontu)
         self.urun_kutusu.setGeometry(90,70,202,50)
         self.urun_kutusu.currentTextChanged.connect(self.urun_degistir)
+        self.urun_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.butce_yazisi = QLabel("Bütçe: ", self)
         self.butce_yazisi.setFont(degiskenler.yazi_fontu)
@@ -91,6 +92,7 @@ class ChatWindow(QMainWindow):
         self.butce_kutusu.addItems(degiskenler.butce_listesi)
         self.butce_kutusu.setFont(degiskenler.yazi_fontu)
         self.butce_kutusu.setGeometry(90,145,202,50)
+        self.butce_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.marka_yazisi = QLabel("Marka: ", self)
         self.marka_yazisi.setFont(degiskenler.yazi_fontu)
@@ -100,6 +102,7 @@ class ChatWindow(QMainWindow):
         self.marka_kutusu.addItems(degiskenler.tum_markalar)
         self.marka_kutusu.setFont(degiskenler.yazi_fontu)
         self.marka_kutusu.setGeometry(90,225,202,50)
+        self.marka_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.kullanim_yazisi = QLabel("Kullanım: ", self)
         self.kullanim_yazisi.setFont(degiskenler.yazi_fontu)
@@ -109,133 +112,44 @@ class ChatWindow(QMainWindow):
         self.kullanim_kutusu.addItems(degiskenler.tum_kullanim_amaclari)
         self.kullanim_kutusu.setFont(degiskenler.yazi_fontu)
         self.kullanim_kutusu.setGeometry(90,300,202,50)
+        self.kullanim_kutusu.setStyleSheet(degiskenler.combobox_stili)
 
         self.mesaj_butonu = QPushButton("Gönder", self)
         self.mesaj_butonu.setGeometry(300, 330, 150, 50)
         self.mesaj_butonu.setFont(degiskenler.buton_fontu)
-        self.mesaj_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.mesaj_butonu.setStyleSheet(degiskenler.buton_stili)
         self.mesaj_butonu.clicked.connect(self.sendMessage)
 
         # YENİ: Grafik göster butonu
         self.grafik_butonu = QPushButton("📊 Grafik Göster", self)
         self.grafik_butonu.setGeometry(470, 330, 300, 50)
         self.grafik_butonu.setFont(degiskenler.buton_fontu)
-        self.grafik_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.grafik_butonu.setStyleSheet(degiskenler.buton_stili)
         self.grafik_butonu.clicked.connect(self.grafik_goster)
         self.grafik_butonu.setEnabled(False)  # Başlangıçta deaktif
 
         self.oneri_butonu = QPushButton("Önerileri Göster", self)
         self.oneri_butonu.setGeometry(50, 610, 200, 70)
         self.oneri_butonu.setFont(degiskenler.buton_fontu)
-        self.oneri_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.oneri_butonu.setStyleSheet(degiskenler.buton_stili)
         self.oneri_butonu.clicked.connect(self.onceki_onerileri_goster)
 
         self.cikis_butonu = QPushButton("Çıkış Yap", self)
         self.cikis_butonu.setGeometry(50, 780, 200, 70)
         self.cikis_butonu.setFont(degiskenler.buton_fontu)
-        self.cikis_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)
         self.cikis_butonu.clicked.connect(self.cikis_yap)
 
         self.mod_butonu = QPushButton("🌙 Gece Modu",self)
         self.mod_butonu.setGeometry(1550,10,200,100)
         self.mod_butonu.setFont(degiskenler.buton_fontu)
-        self.mod_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
         self.mod_butonu.clicked.connect(self.mod_degistir)
 
         self.temizleme_butonu = QPushButton("Sohbeti Sil", self)
         self.temizleme_butonu.setGeometry(50,695,200,70)
         self.temizleme_butonu.setFont(degiskenler.buton_fontu)
-        self.temizleme_butonu.setStyleSheet("""
-            QPushButton {
-                background-color: #000000;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #505050;
-            }
-            QPushButton:disabled {
-                background-color: #95a5a6;
-                color: #7f8c8d;
-            }
-        """)
+        self.temizleme_butonu.setStyleSheet(degiskenler.buton_stili)
         self.temizleme_butonu.clicked.connect(self.sohbet_gecmisini_temizle) 
 
         self.sonuc_kutusu = QTextEdit(self)
@@ -410,7 +324,7 @@ class ChatWindow(QMainWindow):
 
         oneriler = []
         for i, satir in enumerate(satirlar):
-            if satir.startswith("    *   **ÜRÜN:**") or satir.startswith("*   **ÜRÜN:**"):
+            if satir.startswith("    *   **ÜRÜN:**") or satir.startswith("*   **ÜRÜN:**") or satir.startswith("1.  **ÜRÜN:**") or satir.startswith("2.  **ÜRÜN:**"):
                 oneriler.append(satirlar[i].strip())  # Asıl ürün listesi bir sonraki satırda olabilir
 
         if oneriler:
@@ -516,7 +430,19 @@ class ChatWindow(QMainWindow):
             palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
             palet.setColor(QPalette.HighlightedText, Qt.black)
             mevcut_html = mevcut_html.replace("color: black;", "color: white;")
-            QApplication.setPalette(palet)                              
+            QApplication.setPalette(palet)
+
+            self.mesaj_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.oneri_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.grafik_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.mod_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+            self.temizleme_butonu.setStyleSheet(degiskenler.buton_stili_gece)
+
+            self.urun_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.butce_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.marka_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
+            self.kullanim_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
 
         else:
             self.gece_modu = False
@@ -535,6 +461,18 @@ class ChatWindow(QMainWindow):
             """)                                
             mevcut_html = mevcut_html.replace("color: white;", "color: black;")
             QApplication.setPalette(QApplication.style().standardPalette())
+
+            self.mesaj_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.oneri_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.grafik_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
+            self.temizleme_butonu.setStyleSheet(degiskenler.buton_stili)
+
+            self.urun_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.butce_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.marka_kutusu.setStyleSheet(degiskenler.combobox_stili)
+            self.kullanim_kutusu.setStyleSheet(degiskenler.combobox_stili)  
 
         self.sonuc_kutusu.setHtml(mevcut_html)    
            
@@ -561,7 +499,7 @@ class ChatWindow(QMainWindow):
         if cevap == QMessageBox.Yes:
             self.login_window = LoginRegisterWindow()
             self.login_window.show()
-            self.close()  # hide() yerine close() kullan       
+            self.hide()  # hide() yerine close() kullan       
 
     def closeEvent(self, event):
         """Pencere kapatılırken (X butonuna basınca) direkt kapat"""
