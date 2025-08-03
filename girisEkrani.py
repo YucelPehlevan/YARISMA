@@ -1,283 +1,628 @@
 import sys
 from PyQt5.QtCore import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, QParallelAnimationGroup
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import os
 import degiskenler
 from dotenv import load_dotenv
+import random
 
 load_dotenv()
 
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = r"C:\Users\WİN11\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
 
+class AnimatedBackground(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_widget = parent
+        self.particles = []
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_particles)
+        self.timer.start(50)  # 20 FPS
+        self.init_particles()
+        
+    def init_particles(self):
+        for _ in range(30):
+            particle = {
+                'x': random.randint(0, 1600),
+                'y': random.randint(0, 900),
+                'vx': random.uniform(-1, 1),
+                'vy': random.uniform(-1, 1),
+                'size': random.randint(2, 6),
+                'opacity': random.uniform(0.3, 0.8)
+            }
+            self.particles.append(particle)
+    
+    def update_particles(self):
+        for particle in self.particles:
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+            
+            if particle['x'] < 0 or particle['x'] > 1600:
+                particle['vx'] *= -1
+            if particle['y'] < 0 or particle['y'] > 900:
+                particle['vy'] *= -1
+                
+        self.update()
+    
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Gradient background
+        if hasattr(self.parent_widget, 'gece_modu') and self.parent_widget.gece_modu:
+            gradient = QLinearGradient(0, 0, self.width(), self.height())
+            gradient.setColorAt(0, QColor(26, 32, 44))
+            gradient.setColorAt(0.5, QColor(45, 55, 72))
+            gradient.setColorAt(1, QColor(26, 32, 44))
+        else:
+            gradient = QLinearGradient(0, 0, self.width(), self.height())
+            gradient.setColorAt(0, QColor(79, 172, 254))
+            gradient.setColorAt(0.5, QColor(0, 242, 254))
+            gradient.setColorAt(1, QColor(79, 172, 254))
+            
+        painter.fillRect(self.rect(), gradient)
+        
+        # Draw particles
+        for particle in self.particles:
+            color = QColor(255, 255, 255, int(particle['opacity'] * 255))
+            painter.setPen(QPen(color, 1))
+            painter.setBrush(QBrush(color))
+            painter.drawEllipse(int(particle['x']), int(particle['y']), 
+                              particle['size'], particle['size'])
+
+class GlowButton(QPushButton):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.glow_effect = QGraphicsDropShadowEffect()
+        self.glow_effect.setBlurRadius(20)
+        self.glow_effect.setColor(QColor(0, 150, 255, 100))
+        self.glow_effect.setOffset(0, 0)
+        self.setGraphicsEffect(self.glow_effect)
+        
+        self.scale_animation = QPropertyAnimation(self, b"geometry")
+        self.scale_animation.setDuration(150)
+        self.scale_animation.setEasingCurve(QEasingCurve.OutCubic)
+        
+    def enterEvent(self, event):
+        self.glow_effect.setBlurRadius(30)
+        self.glow_effect.setColor(QColor(0, 150, 255, 150))
+        
+        # Scale animation
+        current_rect = self.geometry()
+        new_rect = QRect(current_rect.x() - 5, current_rect.y() - 2,
+                        current_rect.width() + 10, current_rect.height() + 4)
+        
+        self.scale_animation.setStartValue(current_rect)
+        self.scale_animation.setEndValue(new_rect)
+        self.scale_animation.start()
+        
+        super().enterEvent(event)
+        
+    def leaveEvent(self, event):
+        self.glow_effect.setBlurRadius(20)
+        self.glow_effect.setColor(QColor(0, 150, 255, 100))
+        
+        # Scale back
+        current_rect = self.geometry()
+        new_rect = QRect(current_rect.x() + 5, current_rect.y() + 2,
+                        current_rect.width() - 10, current_rect.height() - 4)
+        
+        self.scale_animation.setStartValue(current_rect)
+        self.scale_animation.setEndValue(new_rect)
+        self.scale_animation.start()
+        
+        super().leaveEvent(event)
+
+class FloatingCard(QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFrameStyle(QFrame.NoFrame)
+        
+        # Drop shadow effect
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(25)
+        self.shadow.setColor(QColor(0, 0, 0, 80))
+        self.shadow.setOffset(0, 10)
+        self.setGraphicsEffect(self.shadow)
+        
+        # Float animation
+        self.float_animation = QPropertyAnimation(self, b"pos")
+        self.float_animation.setDuration(3000)
+        self.float_animation.setEasingCurve(QEasingCurve.InOutSine)
+        self.float_animation.setLoopCount(-1)  # Infinite loop
+        
+    def start_floating(self):
+        start_pos = self.pos()
+        end_pos = QPoint(start_pos.x(), start_pos.y() - 10)
+        
+        self.float_animation.setStartValue(start_pos)
+        self.float_animation.setEndValue(end_pos)
+        self.float_animation.start()
+
 class LoginRegisterWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setGeometry(100, 100, 1600, 900)
-        self.setWindowTitle("Alışveriş Asistanı")
+        self.setWindowTitle("Alışveriş Asistanı - Premium Edition")
         self.setWindowIcon(QIcon("robot.png"))
         self.gece_modu = False
-
+        
+        # Set window flags for modern look
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
         self.initUI()
+        self.setup_animations()
 
     def initUI(self):
-        self.yazi = QLabel("Alışveriş asistanına hoşgeldiniz devam etmek için lütfen giriş yapın",self)
-        self.yazi.setFont(degiskenler.baslik_fontu)
-        self.yazi.setGeometry(300,100,1200,100)
+        # Main container with animated background
+        self.main_container = QWidget(self)
+        self.setCentralWidget(self.main_container)
         
-        self.cikis_butonu = QPushButton("Çıkış Yap",self)
-        self.cikis_butonu.setGeometry(100,700,200,100)
-        self.cikis_butonu.setFont(degiskenler.buton_fontu)
-        self.cikis_butonu.clicked.connect(self.cikis_yap)
-        self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)    
+        # Animated background
+        self.background = AnimatedBackground(self)
+        self.background.setGeometry(0, 0, 1600, 900)
+        
+        # Title with glow effect
+        self.title_label = QLabel("✨ Alışveriş Asistanı ✨", self)
+        self.title_label.setFont(QFont("Segoe UI", 32, QFont.Bold))
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setGeometry(200, 50, 1200, 80)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                background: transparent;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+        """)
+        
+        # Subtitle
+        self.subtitle = QLabel("Premium alışveriş deneyimi için giriş yapın", self)
+        self.subtitle.setFont(QFont("Segoe UI", 16))
+        self.subtitle.setAlignment(Qt.AlignCenter)
+        self.subtitle.setGeometry(200, 130, 1200, 40)
+        self.subtitle.setStyleSheet("""
+            QLabel {
+                color: rgba(255, 255, 255, 0.9);
+                background: transparent;
+            }
+        """)
+        
+        # Window controls
+        self.init_window_controls()
+        
+        # Login and register cards
+        self.init_login_card()
+        self.init_register_card()
+        
+        # Mode toggle button
+        self.init_mode_button()
 
-        self.mod_butonu = QPushButton("🌙 Gece Modu",self)
-        self.mod_butonu.setGeometry(1350,20,200,100)
-        self.mod_butonu.setFont(degiskenler.buton_fontu)
-        self.mod_butonu.clicked.connect(self.mod_degistir)
-        self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
+    def init_window_controls(self):
+        # Close button
+        self.close_btn = QPushButton("✕", self)
+        self.close_btn.setGeometry(1540, 20, 40, 40)
+        self.close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 0, 0, 0.8);
+                color: white;
+                border: none;
+                border-radius: 20px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 0, 0, 1);
+                transform: scale(1.1);
+            }
+        """)
+        self.close_btn.clicked.connect(self.close_application)
+        
+        # Minimize button
+        self.min_btn = QPushButton("—", self)
+        self.min_btn.setGeometry(1490, 20, 40, 40)
+        self.min_btn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 193, 7, 0.8);
+                color: white;
+                border: none;
+                border-radius: 20px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 193, 7, 1);
+            }
+        """)
+        self.min_btn.clicked.connect(self.showMinimized)
 
-        self.initLoginForm()
-        self.initRegisterForm()
+    def init_login_card(self):
+        # Login card
+        self.login_card = FloatingCard(self)
+        self.login_card.setGeometry(200, 250, 450, 500)
+        self.login_card.setStyleSheet("""
+            QFrame {
+                background: rgba(255, 255, 255, 0.15);
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 25px;
+                backdrop-filter: blur(20px);
+            }
+        """)
+        
+        # Login title
+        login_title = QLabel("🔐 Giriş Yap", self.login_card)
+        login_title.setFont(QFont("Segoe UI", 24, QFont.Bold))
+        login_title.setAlignment(Qt.AlignCenter)
+        login_title.setGeometry(50, 30, 350, 50)
+        login_title.setStyleSheet("color: white; background: transparent;")
+        
+        # Email field
+        self.email_label = QLabel("📧 E-posta:", self.login_card)
+        self.email_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.email_label.setGeometry(50, 120, 350, 30)
+        self.email_label.setStyleSheet("color: white; background: transparent;")
+        
+        self.login_email = QLineEdit(self.login_card)
+        self.login_email.setGeometry(50, 155, 350, 55)
+        self.login_email.setPlaceholderText("E-posta adresinizi girin...")
+        self.login_email.setStyleSheet(degiskenler.modern_lineedit_style)
+        
+        # Password field
+        self.password_label = QLabel("🔒 Şifre:", self.login_card)
+        self.password_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.password_label.setGeometry(50, 240, 350, 30)
+        self.password_label.setStyleSheet("color: white; background: transparent;")
+        
+        self.login_password = QLineEdit(self.login_card)
+        self.login_password.setGeometry(50, 275, 350, 55)
+        self.login_password.setPlaceholderText("Şifrenizi girin...")
+        self.login_password.setEchoMode(QLineEdit.Password)
+        self.login_password.setStyleSheet(degiskenler.modern_lineedit_style)
+        
+        # Login button
+        self.login_btn = GlowButton("🚀 Giriş Yap", self.login_card)
+        self.login_btn.setGeometry(100, 380, 250, 65)
+        self.login_btn.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        self.login_btn.setStyleSheet(degiskenler.premium_button_style)
+        self.login_btn.clicked.connect(self.giris_yap)
 
-    def initLoginForm(self):
-        self.giris_butonu = QPushButton("Giriş Yap",self)
-        self.giris_butonu.setGeometry(400,250,200,100)
-        self.giris_butonu.setFont(degiskenler.buton_fontu)
-        self.giris_butonu.clicked.connect(self.giris_yap)
-        self.giris_butonu.setStyleSheet(degiskenler.buton_stili) 
+    def init_register_card(self):
+        # Register card
+        self.register_card = FloatingCard(self)
+        self.register_card.setGeometry(950, 200, 450, 650)
+        self.register_card.setStyleSheet("""
+            QFrame {
+                background: rgba(255, 255, 255, 0.15);
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 25px;
+                backdrop-filter: blur(20px);
+            }
+        """)
+        
+        # Register title
+        register_title = QLabel("✨ Kayıt Ol", self.register_card)
+        register_title.setFont(QFont("Segoe UI", 24, QFont.Bold))
+        register_title.setAlignment(Qt.AlignCenter)
+        register_title.setGeometry(50, 20, 350, 50)
+        register_title.setStyleSheet("color: white; background: transparent;")
+        
+        # Email and password fields
+        self.register_email = QLineEdit(self.register_card)
+        self.register_email.setGeometry(50, 90, 350, 50)
+        self.register_email.setPlaceholderText("📧 E-posta adresiniz...")
+        self.register_email.setStyleSheet(degiskenler.modern_lineedit_style)
+        
+        self.register_password = QLineEdit(self.register_card)
+        self.register_password.setGeometry(50, 160, 350, 50)
+        self.register_password.setPlaceholderText("🔒 Şifreniz (min 6 karakter)...")
+        self.register_password.setEchoMode(QLineEdit.Password)
+        self.register_password.setStyleSheet(degiskenler.modern_lineedit_style)
+        
+        # Personal info section
+        personal_info = QLabel("👤 Kişisel Bilgiler", self.register_card)
+        personal_info.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        personal_info.setGeometry(50, 230, 350, 30)
+        personal_info.setStyleSheet("color: white; background: transparent;")
+        
+        # Gender
+        self.gender_combo = QComboBox(self.register_card)
+        self.gender_combo.addItems(["👤 Cinsiyet", "👩 Kadın", "👨 Erkek"])
+        self.gender_combo.setGeometry(50, 270, 165, 45)
+        self.gender_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Profession
+        self.profession_combo = QComboBox(self.register_card)
+        profession_items = ["💼 Meslek"] + degiskenler.meslek_listesi
+        self.profession_combo.addItems(profession_items)
+        self.profession_combo.setGeometry(235, 270, 165, 45)
+        self.profession_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Education
+        self.education_combo = QComboBox(self.register_card)
+        education_items = ["🎓 Eğitim"] + degiskenler.egitim_listesi
+        self.education_combo.addItems(education_items)
+        self.education_combo.setGeometry(50, 335, 165, 45)
+        self.education_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Age
+        self.age_combo = QComboBox(self.register_card)
+        age_items = ["🎂 Yaş"] + degiskenler.yas_listesi
+        self.age_combo.addItems(age_items)
+        self.age_combo.setGeometry(235, 335, 165, 45)
+        self.age_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Height
+        self.height_combo = QComboBox(self.register_card)
+        height_items = ["📏 Boy"] + degiskenler.boy_listesi
+        self.height_combo.addItems(height_items)
+        self.height_combo.setGeometry(50, 400, 165, 45)
+        self.height_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Weight
+        self.weight_combo = QComboBox(self.register_card)
+        weight_items = ["⚖️ Kilo"] + degiskenler.kilo_listesi
+        self.weight_combo.addItems(weight_items)
+        self.weight_combo.setGeometry(235, 400, 165, 45)
+        self.weight_combo.setStyleSheet(degiskenler.modern_combobox_style)
+        
+        # Register button
+        self.register_btn = GlowButton("🌟 Hesap Oluştur", self.register_card)
+        self.register_btn.setGeometry(100, 500, 250, 65)
+        self.register_btn.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        self.register_btn.setStyleSheet(degiskenler.premium_button_style_2)
+        self.register_btn.clicked.connect(self.kayit_ol)
 
-        self.email_yazisi = QLabel("Email: ",self)
-        self.email_yazisi.setFont(degiskenler.yazi_fontu)
-        self.email_yazisi.setGeometry(310,370,200,40)
+    def init_mode_button(self):
+        self.mode_btn = GlowButton("🌙 Gece Modu", self)
+        self.mode_btn.setGeometry(50, 50, 200, 60)
+        self.mode_btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        self.mode_btn.setStyleSheet(degiskenler.mode_button_style)
+        self.mode_btn.clicked.connect(self.toggle_mode)
 
-        self.giris_email_kutusu = QLineEdit(self)
-        self.giris_email_kutusu.setGeometry(375,370,250,50)
-        self.giris_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
-        self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+    def setup_animations(self):
+        # Start floating animations for cards
+        QTimer.singleShot(500, self.login_card.start_floating)
+        QTimer.singleShot(700, self.register_card.start_floating)
+        
+        # Title animation
+        self.title_animation = QPropertyAnimation(self.title_label, b"pos")
+        self.title_animation.setDuration(1000)
+        self.title_animation.setEasingCurve(QEasingCurve.OutBounce)
+        
+        start_pos = QPoint(200, -100)
+        end_pos = QPoint(200, 50)
+        self.title_animation.setStartValue(start_pos)
+        self.title_animation.setEndValue(end_pos)
+        self.title_animation.start()
 
-        self.sifre_yazisi = QLabel("Şifre: ",self)
-        self.sifre_yazisi.setFont(degiskenler.yazi_fontu)
-        self.sifre_yazisi.setGeometry(310,470,200,40)
+    def toggle_mode(self):
+        self.gece_modu = not self.gece_modu
+        
+        if self.gece_modu:
+            self.mode_btn.setText("☀️ Gündüz Modu")
+            # Apply dark theme styles
+            self.apply_dark_theme()
+        else:
+            self.mode_btn.setText("🌙 Gece Modu")
+            # Apply light theme styles
+            self.apply_light_theme()
 
-        self.giris_sifre_kutusu = QLineEdit(self)
-        self.giris_sifre_kutusu.setGeometry(375,470,250,50)
-        self.giris_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
-        self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
+    def apply_dark_theme(self):
+        # Update card styles for dark mode
+        dark_card_style = """
+            QFrame {
+                background: rgba(26, 32, 44, 0.8);
+                border: 2px solid rgba(100, 100, 100, 0.3);
+                border-radius: 25px;
+                backdrop-filter: blur(20px);
+            }
+        """
+        self.login_card.setStyleSheet(dark_card_style)
+        self.register_card.setStyleSheet(dark_card_style)
 
-    def initRegisterForm(self):
-        self.kayit_butonu = QPushButton("Kayıt Ol",self)
-        self.kayit_butonu.setGeometry(1000,250,200,100)
-        self.kayit_butonu.setFont(degiskenler.buton_fontu)
-        self.kayit_butonu.clicked.connect(self.kayit_ol)
-        self.kayit_butonu.setStyleSheet(degiskenler.buton_stili)
+    def apply_light_theme(self):
+        # Update card styles for light mode
+        light_card_style = """
+            QFrame {
+                background: rgba(255, 255, 255, 0.15);
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 25px;
+                backdrop-filter: blur(20px);
+            }
+        """
+        self.login_card.setStyleSheet(light_card_style)
+        self.register_card.setStyleSheet(light_card_style)
 
-        self.kayit_email_kutusu = QLineEdit(self)
-        self.kayit_email_kutusu.setGeometry(975,370,250,50)
-        self.kayit_email_kutusu.setPlaceholderText("Lütfen emailinizi bu alana girin")
-        self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-
-        self.kayit_sifre_kutusu = QLineEdit(self)
-        self.kayit_sifre_kutusu.setGeometry(975,470,250,50)
-        self.kayit_sifre_kutusu.setPlaceholderText("Lütfen şifrenizi bu alana girin")
-        self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-
-        self.cinsiyet_yazisi = QLabel("Cinsiyetiniz: ",self)
-        self.cinsiyet_yazisi.setFont(degiskenler.yazi_fontu)
-        self.cinsiyet_yazisi.setGeometry(775,550,100,30)
-
-        self.cinsiyet_kutusu = QComboBox(self)
-        self.cinsiyet_kutusu.addItems(["Kadın","Erkek"])
-        self.cinsiyet_kutusu.setGeometry(880,540,150,50)
-        self.cinsiyet_kutusu.setFont(degiskenler.yazi_fontu)
-        self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-        self.meslek_yazisi = QLabel("Mesleğiniz: ",self)
-        self.meslek_yazisi.setFont(degiskenler.yazi_fontu)
-        self.meslek_yazisi.setGeometry(775,650,100,30)
-
-        self.meslek_kutusu = QComboBox(self)
-        self.meslek_kutusu.addItems(degiskenler.meslek_listesi)
-        self.meslek_kutusu.setGeometry(880,640,150,50)
-        self.meslek_kutusu.setFont(degiskenler.yazi_fontu)
-        self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-        self.egitim_yazisi = QLabel("    Eğitim\nDurumunuz: ",self)
-        self.egitim_yazisi.setFont(degiskenler.yazi_fontu)
-        self.egitim_yazisi.setGeometry(770,740,100,50)
-
-        self.egitim_kutusu = QComboBox(self)
-        self.egitim_kutusu.addItems(degiskenler.egitim_listesi)
-        self.egitim_kutusu.setGeometry(880,740,150,50)
-        self.egitim_kutusu.setFont(degiskenler.yazi_fontu)
-        self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-        self.yas_yazisi = QLabel("    Yaş\nAralığınız: ",self)
-        self.yas_yazisi.setFont(degiskenler.yazi_fontu)
-        self.yas_yazisi.setGeometry(1050,540,100,50)
-
-        self.yas_kutusu = QComboBox(self)
-        self.yas_kutusu.addItems(degiskenler.yas_listesi)
-        self.yas_kutusu.setGeometry(1150,540,150,50)
-        self.yas_kutusu.setFont(degiskenler.yazi_fontu)
-        self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-        self.boy_yazisi = QLabel("    Boy\nAralığınız: ",self)
-        self.boy_yazisi.setFont(degiskenler.yazi_fontu)
-        self.boy_yazisi.setGeometry(1050,650,100,50)
-
-        self.boy_kutusu = QComboBox(self)
-        self.boy_kutusu.addItems(degiskenler.boy_listesi)
-        self.boy_kutusu.setGeometry(1150,650,150,50)
-        self.boy_kutusu.setFont(degiskenler.yazi_fontu)
-        self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-        self.kilo_yazisi = QLabel("    Kilo\nAralığınız: ",self)
-        self.kilo_yazisi.setFont(degiskenler.yazi_fontu)
-        self.kilo_yazisi.setGeometry(1050,750,100,50)
-
-        self.kilo_kutusu = QComboBox(self)
-        self.kilo_kutusu.addItems(degiskenler.kilo_listesi)
-        self.kilo_kutusu.setGeometry(1150,750,150,50)
-        self.kilo_kutusu.setFont(degiskenler.yazi_fontu)
-        self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
-    def cikis_yap(self):
-        soru = QMessageBox().question(self,"Çıkış yap","Uygulamadan çıkmak istediğinize emin misiniz?",QMessageBox.Yes | QMessageBox.No) 
-        if soru == QMessageBox.Yes:
+    def close_application(self):
+        reply = QMessageBox.question(self, 'Çıkış', 
+                                   'Uygulamadan çıkmak istediğinizden emin misiniz?',
+                                   QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
             self.close()
             sys.exit()
 
-    def mod_degistir(self):
-        if not self.gece_modu:
-            self.gece_modu = True
-            self.mod_butonu.setText("☀️ Gündüz Modu")
-
-            # Gece modu renkleri
-            palet = QPalette()
-            palet.setColor(QPalette.Window, QColor(53, 53, 53))
-            palet.setColor(QPalette.WindowText, Qt.white)
-            palet.setColor(QPalette.Base, QColor(35, 35, 35))
-            palet.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-            palet.setColor(QPalette.ToolTipBase, Qt.white)
-            palet.setColor(QPalette.ToolTipText, Qt.white)
-            palet.setColor(QPalette.Text, Qt.white)
-            palet.setColor(QPalette.Button, QColor(53, 53, 53))
-            palet.setColor(QPalette.ButtonText, Qt.white)
-            palet.setColor(QPalette.BrightText, Qt.red)
-            palet.setColor(QPalette.Link, QColor(42, 130, 218))
-            palet.setColor(QPalette.Highlight, QColor(42, 130, 218))
-            palet.setColor(QPalette.HighlightedText, Qt.black)
-            QApplication.setPalette(palet)
-
-            self.kayit_butonu.setStyleSheet(degiskenler.buton_stili_gece)
-            self.giris_butonu.setStyleSheet(degiskenler.buton_stili_gece)
-            self.mod_butonu.setStyleSheet(degiskenler.buton_stili_gece)
-            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili_gece)
-
-            self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
-            self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
-            self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
-            self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili_gece)
-
-            self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
-            self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
-            self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
-            self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
-            self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)
-            self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili_gece)                              
-
-        else:
-            self.gece_modu = False
-            self.mod_butonu.setText("🌙 Gece Modu")
-            QApplication.setPalette(QApplication.style().standardPalette())
-
-            self.kayit_butonu.setStyleSheet(degiskenler.buton_stili)
-            self.giris_butonu.setStyleSheet(degiskenler.buton_stili)
-            self.mod_butonu.setStyleSheet(degiskenler.buton_stili)
-            self.cikis_butonu.setStyleSheet(degiskenler.buton_stili)
-
-            self.giris_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-            self.giris_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-            self.kayit_email_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-            self.kayit_sifre_kutusu.setStyleSheet(degiskenler.lineEdit_stili)
-
-            self.cinsiyet_kutusu.setStyleSheet(degiskenler.combobox_stili)
-            self.meslek_kutusu.setStyleSheet(degiskenler.combobox_stili)
-            self.egitim_kutusu.setStyleSheet(degiskenler.combobox_stili)
-            self.yas_kutusu.setStyleSheet(degiskenler.combobox_stili)
-            self.boy_kutusu.setStyleSheet(degiskenler.combobox_stili)
-            self.kilo_kutusu.setStyleSheet(degiskenler.combobox_stili)
-
     def giris_yap(self):
-        email = self.giris_email_kutusu.text()
-        sifre = self.giris_sifre_kutusu.text()
+        email = self.login_email.text()
+        sifre = self.login_password.text()
+        
+        if not email or not sifre:
+            self.show_message("Hata", "Lütfen tüm alanları doldurun!", "error")
+            return
+            
         from chatEkrani import ChatWindow
         from veritabani import giris_kontrol
 
-        if giris_kontrol(email,sifre):
+        if giris_kontrol(email, sifre):
             degiskenler.giris_durumu = True
             degiskenler.giris_yapan_email = email
-            self.konusma_penceresi = ChatWindow()
-            self.hide()
-            self.konusma_penceresi.show()
+            self.show_message("Başarılı", "Giriş başarılı! Hoş geldiniz.", "success")
+            
+            # Fade out animation before switching
+            self.fade_out_animation = QPropertyAnimation(self, b"windowOpacity")
+            self.fade_out_animation.setDuration(500)
+            self.fade_out_animation.setStartValue(1.0)
+            self.fade_out_animation.setEndValue(0.0)
+            self.fade_out_animation.finished.connect(self.open_chat_window)
+            self.fade_out_animation.start()
         else:
-            uyari = QMessageBox()
-            uyari.setWindowTitle("Giriş Başarısız")
-            uyari.setText("E-Posta ya da şifre hatalı")
-            uyari.exec_()   
+            self.show_message("Hata", "E-posta veya şifre hatalı!", "error")
+
+    def open_chat_window(self):
+        from chatEkrani import ChatWindow
+        self.chat_window = ChatWindow()
+        self.hide()
+        self.chat_window.show()
 
     def kayit_ol(self):
-        email = self.kayit_email_kutusu.text()
-        sifre = self.kayit_sifre_kutusu.text()
+        email = self.register_email.text()
+        sifre = self.register_password.text()
+        
+        if not email or not sifre:
+            self.show_message("Hata", "E-posta ve şifre alanları zorunludur!", "error")
+            return
+            
+        if self.gender_combo.currentIndex() == 0:
+            self.show_message("Hata", "Lütfen cinsiyetinizi seçin!", "error")
+            return
+            
         from chatEkrani import ChatWindow 
         from veritabani import kullanici_ekle, kullanici_var_mi
         from email_yonetimi import dogrulama_kodu_gonder
 
         if kullanici_var_mi(email):
-            QMessageBox.warning(self, "Kayıt Başarısız", "Bu maile ait kayıtlı bir hesap bulunmaktadır.")
+            self.show_message("Hata", "Bu e-posta adresi zaten kayıtlı!", "error")
             return
 
-        if any(email.endswith(kelime) for kelime in ["@gmail.com", "@hotmail.com", "@outlook.com"]) and len(sifre) >= 6 and " " not in email and " " not in sifre:
-            # Şifre ve mail geçerli, şimdi doğrulama kodu gönder
-            gmail_adresi = os.getenv("EMAIL_ADRESI")
-            gmail_sifresi = os.getenv("EMAIL_SIFRE")
-            kod = dogrulama_kodu_gonder(email, gmail_adresi, gmail_sifresi)
+        if not any(email.endswith(domain) for domain in ["@gmail.com", "@hotmail.com", "@outlook.com"]):
+            self.show_message("Hata", "Geçerli bir e-posta adresi girin!", "error")
+            return
+            
+        if len(sifre) < 6:
+            self.show_message("Hata", "Şifre en az 6 karakter olmalıdır!", "error")
+            return
+            
+        if " " in email or " " in sifre:
+            self.show_message("Hata", "E-posta ve şifrede boşluk kullanmayın!", "error")
+            return
 
-            if not kod:
-                QMessageBox.warning(self, "Hata", "Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.")
-                return
+        # Email verification
+        gmail_adresi = os.getenv("EMAIL_ADRESI")
+        gmail_sifresi = os.getenv("EMAIL_SIFRE")
+        kod = dogrulama_kodu_gonder(email, gmail_adresi, gmail_sifresi)
 
-            girilen_kod, ok = QInputDialog.getText(self, "Doğrulama", "E-posta adresinize gelen doğrulama kodunu girin:")
-            if ok and girilen_kod == kod:
-                # Başarılı doğrulama
-                kullanici_ekle(
-                    email, sifre,
-                    self.cinsiyet_kutusu.currentText(),
-                    self.meslek_kutusu.currentText(),
-                    self.egitim_kutusu.currentText(),
-                    self.yas_kutusu.currentText(),
-                    self.boy_kutusu.currentText(),
-                    self.kilo_kutusu.currentText()
-                )
-                degiskenler.giris_durumu = True
-                degiskenler.giris_yapan_email = email
-                self.konusma_penceresi = ChatWindow()
-                self.hide()
-                self.konusma_penceresi.show()
-            else:
-                QMessageBox.warning(self, "Hata", "Doğrulama kodu yanlış veya işlem iptal edildi.")
+        if not kod:
+            self.show_message("Hata", "Doğrulama kodu gönderilemedi!", "error")
+            return
+
+        girilen_kod, ok = QInputDialog.getText(self, "📧 E-posta Doğrulama", 
+                                             "E-posta adresinize gönderilen doğrulama kodunu girin:")
+        
+        if ok and girilen_kod == kod:
+            kullanici_ekle(
+                email, sifre,
+                self.gender_combo.currentText().replace("👩 ", "").replace("👨 ", ""),
+                self.profession_combo.currentText().replace("💼 ", ""),
+                self.education_combo.currentText().replace("🎓 ", ""),
+                self.age_combo.currentText().replace("🎂 ", ""),
+                self.height_combo.currentText().replace("📏 ", ""),
+                self.weight_combo.currentText().replace("⚖️ ", "")
+            )
+            
+            degiskenler.giris_durumu = True
+            degiskenler.giris_yapan_email = email
+            self.show_message("Başarılı", "Kayıt başarılı! Hoş geldiniz.", "success")
+            
+            # Fade out animation
+            self.fade_out_animation = QPropertyAnimation(self, b"windowOpacity")
+            self.fade_out_animation.setDuration(500)
+            self.fade_out_animation.setStartValue(1.0)
+            self.fade_out_animation.setEndValue(0.0)
+            self.fade_out_animation.finished.connect(self.open_chat_window)
+            self.fade_out_animation.start()
         else:
-            QMessageBox.warning(self, "Kayıt Başarısız", "Geçerli bir e-posta ve en az 6 karakterli şifre girin. Boşluk karakteri kullanmayın.")
-                        
+            self.show_message("Hata", "Doğrulama kodu yanlış!", "error")
+
+    def show_message(self, title, message, msg_type):
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        
+        if msg_type == "success":
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background-color: #d4edda;
+                    color: #155724;
+                    border: 2px solid #c3e6cb;
+                    border-radius: 10px;
+                }
+                QMessageBox QLabel {
+                    color: #155724;
+                    font-size: 14px;
+                }
+                QMessageBox QPushButton {
+                    background-color: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }
+            """)
+        else:
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border: 2px solid #f5c6cb;
+                    border-radius: 10px;
+                }
+                QMessageBox QLabel {
+                    color: #721c24;
+                    font-size: 14px;
+                }
+                QMessageBox QPushButton {
+                    background-color: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }
+            """)
+        
+        msg_box.exec_()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_start_position = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton and hasattr(self, 'drag_start_position'):
+            self.move(self.pos() + event.globalPos() - self.drag_start_position)
+            self.drag_start_position = event.globalPos()
 
 def main():
     uygulama = QApplication(sys.argv)
-    QApplication.setPalette(QApplication.style().standardPalette())
+    uygulama.setStyle('Fusion')  # Modern look
+    
+    # Set application icon
+    uygulama.setWindowIcon(QIcon("robot.png"))
+    
     pencere = LoginRegisterWindow()
     pencere.show()
+    
+    # Fade in animation
+    fade_in = QPropertyAnimation(pencere, b"windowOpacity")
+    fade_in.setDuration(1000)
+    fade_in.setStartValue(0.0)
+    fade_in.setEndValue(1.0)
+    fade_in.start()
+    
     sys.exit(uygulama.exec_())
 
 if __name__ == "__main__":
-    main()        
+    main()
