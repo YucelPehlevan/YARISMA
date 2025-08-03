@@ -257,6 +257,18 @@ class LoginRegisterWindow(QMainWindow):
         self.title_animation = QPropertyAnimation(self.title_label, b"pos")
         self.title_animation.setDuration(1000)
         self.title_animation.setEasingCurve(QEasingCurve.OutBounce)
+
+        # Title glow animation
+        self.title_glow_animation = QPropertyAnimation(self.title_label.graphicsEffect(), b"blurRadius")
+        self.title_glow_animation.setDuration(2000)
+        self.title_glow_animation.setStartValue(10)
+        self.title_glow_animation.setEndValue(30)
+        self.title_glow_animation.setLoopCount(-1)
+        self.title_glow_animation.setEasingCurve(QEasingCurve.InOutSine)
+        # Hata alınan satır düzeltildi:
+        self.title_glow_animation.setDirection(QAbstractAnimation.Direction.Forward) 
+        
+        self.title_glow_animation.start()
         
         start_pos = QPoint(200, -100)
         end_pos = QPoint(200, 50)
@@ -472,15 +484,28 @@ class LoginRegisterWindow(QMainWindow):
             self.move(self.pos() + event.globalPos() - self.drag_start_position)
             self.drag_start_position = event.globalPos()
 
+def show_main_window(splash, window): # Yeni yardımcı fonksiyon
+    splash.close()  # Splash ekranını kapat
+    window.show()   # Ana pencereyi göster (tam ekran yerine show kullandım, tam ekran istersen window.showFullScreen() kullanabilirsin)
+
 def main():
     uygulama = QApplication(sys.argv)
     uygulama.setStyle('Fusion')  # Modern look
     
     # Set application icon
     uygulama.setWindowIcon(QIcon("robot.png"))
-    
+
+    splash_pixmap = QPixmap("robot.png")  
+    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
+    screens = QApplication.screens()
+    if len(screens) > 1:
+        second_screen = screens[-1] # Son ekranı ikinci ekran olarak kabul et
+        splash.move(second_screen.geometry().center() - splash.rect().center())
+        
+    splash.show() # Splash ekranını göste
+
     pencere = LoginRegisterWindow()
-    pencere.show()
+    pencere.hide()
     
     # Fade in animation
     fade_in = QPropertyAnimation(pencere, b"windowOpacity")
@@ -488,7 +513,8 @@ def main():
     fade_in.setStartValue(0.0)
     fade_in.setEndValue(1.0)
     fade_in.start()
-    
+
+    QTimer.singleShot(2000, lambda: show_main_window(splash, pencere))
     sys.exit(uygulama.exec_())
 
 if __name__ == "__main__":
