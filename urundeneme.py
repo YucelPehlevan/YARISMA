@@ -13,9 +13,16 @@ import numpy as np
 # Ürün verilerini import et
 try:
     from urunler import telefonlar, bilgisayarlar, kameralar, kulakliklar, tabletler
-    
+
     # Tüm ürünleri birleştir
     tum_urunler = telefonlar + bilgisayarlar + kameralar + kulakliklar + tabletler
+
+    # Debug: İlk birkaç ürünün yapısını kontrol et
+    print(f"📦 Toplam {len(tum_urunler)} ürün yüklendi")
+    if len(tum_urunler) > 0:
+        print(f"🔍 İlk ürün örneği: {tum_urunler[0]}")
+        print(f"🔍 İlk ürün uzunluğu: {len(tum_urunler[0])}")
+
 except ImportError:
     print("urunler.py dosyası bulunamadı!")
     tum_urunler = []
@@ -27,7 +34,7 @@ class GrafikPenceresi(QMainWindow):
         self.setWindowTitle(f"{urun_adi} - Fiyat Grafik Analizi")
         self.setGeometry(200, 200, 1200, 800)
         self.setWindowIcon(QIcon("robot.png"))
-        
+
         self.initUI()
         self.grafik_olustur()
 
@@ -66,8 +73,9 @@ class GrafikPenceresi(QMainWindow):
         self.bilgi_paneli.setMaximumHeight(150)
         self.bilgi_paneli.setStyleSheet("""
             QTextEdit {
-                background-color: #f8f9fa;
-                border: 1px solid #dee2e6;
+                background-color: #1e1e1e;
+                color: #ffffff;
+                border: 1px solid #404040;
                 border-radius: 5px;
                 padding: 10px;
                 font-size: 12px;
@@ -118,6 +126,40 @@ class GrafikPenceresi(QMainWindow):
         alt_layout.addWidget(buton_paneli)
         layout.addWidget(alt_panel)
 
+    def urun_parse_et(self, urun):
+        """Ürün verisini güvenli şekilde parse eder"""
+        try:
+            if len(urun) == 5:
+                # Format: (urun_turu, marka, model, fiyat, ozellikler)
+                urun_turu, marka, model, fiyat_str, ozellikler = urun
+                return urun_turu, marka, model, fiyat_str
+            elif len(urun) == 4:
+                # Format: (urun_turu, marka, model, fiyat)
+                urun_turu, marka, model, fiyat_str = urun
+                return urun_turu, marka, model, fiyat_str
+            elif len(urun) == 3:
+                # Format: (marka, model, fiyat)
+                marka, model, fiyat_str = urun
+                urun_turu = "Bilinmiyor"
+                return urun_turu, marka, model, fiyat_str
+            elif len(urun) == 2:
+                # Format: (marka_model, fiyat)
+                marka_model, fiyat_str = urun
+                # Marka ve modeli ayırmaya çalış
+                parts = str(marka_model).split(' ', 1)
+                if len(parts) >= 2:
+                    marka, model = parts[0], parts[1]
+                else:
+                    marka, model = parts[0], ""
+                urun_turu = "Bilinmiyor"
+                return urun_turu, marka, model, fiyat_str
+            else:
+                print(f"⚠️ Beklenmeyen ürün formatı (uzunluk: {len(urun)}): {urun}")
+                return None, None, None, None
+        except Exception as e:
+            print(f"❌ Ürün parse hatası: {e}, Ürün: {urun}")
+            return None, None, None, None
+
     def urun_fiyat_verisi_olustur(self):
         """Ürünler.py dosyasından güncel fiyatı alıp, geçmiş 30 günlük mantıklı fiyat verisi oluşturur"""
         # Son 30 günlük veri
@@ -136,24 +178,30 @@ class GrafikPenceresi(QMainWindow):
         en_yuksek_skor = 0
         
         try:
-            for urun in tum_urunler:
-                urun_turu, marka, model, fiyat_str = urun
-                tam_ad = f"{marka} {model}"
+            for i, urun in enumerate(tum_urunler):
+                # Ürünü güvenli şekilde parse et
+                urun_turu, marka, model, fiyat_str = self.urun_parse_et(urun)
+                
+                if marka is None:  # Parse başarısız
+                    continue
+                
+                tam_ad = f"{marka} {model}".strip()
                 
                 # Eşleştirme skoru hesapla
                 skor = self.urun_eslesme_skoru_hesapla(self.urun_adi, tam_ad, marka, model)
                 
-                print(f"🔎 Kontrol: '{tam_ad}' - Skor: {skor:.2f} - Fiyat: '{fiyat_str}'")
+                if i < 5:  # İlk 5 ürün için debug
+                    print(f"🔎 Kontrol: '{tam_ad}' - Skor: {skor:.2f} - Fiyat: '{fiyat_str}'")
                 
                 if skor > en_yuksek_skor:
                     en_yuksek_skor = skor
-                    en_iyi_eslesme = urun
-                    print(f"   ⭐ Yeni en iyi eşleşme! Skor: {skor:.2f}")
+                    en_iyi_eslesme = (urun_turu, marka, model, fiyat_str)
+                    print(f"   ⭐ Yeni en iyi eşleşme! '{tam_ad}' Skor: {skor:.2f}")
             
             # En iyi eşleşmeyi kullan (minimum skor 0.3)
             if en_iyi_eslesme and en_yuksek_skor >= 0.3:
                 urun_turu, marka, model, fiyat_str = en_iyi_eslesme
-                tam_ad = f"{marka} {model}"
+                tam_ad = f"{marka} {model}".strip()
                 guncel_fiyat = self.fiyat_parse_et(fiyat_str)
                 bulunan_urun = tam_ad
                 print(f"✅ En iyi eşleşen ürün: {tam_ad} (Skor: {en_yuksek_skor:.2f})")
@@ -402,6 +450,7 @@ class GrafikPenceresi(QMainWindow):
         tasarruf_yuzde = (tasarruf_miktar / max_fiyat) * 100 if max_fiyat > 0 else 0
 
         bilgi_metni = f"""
+
 📈 <b>FİYAT ANALİZİ RAPORU</b>
 
 💰 <b>Güncel Fiyat:</b> {guncel_fiyat:.2f} ₺ (Veritabanından)
@@ -412,17 +461,18 @@ class GrafikPenceresi(QMainWindow):
 📅 <b>30 Günlük Değişim:</b> {fiyat_degisimi:.2f} ₺ ({degisim_yuzdesi:+.1f}%)
 
 💡 <b>Fiyat Durumu:</b>
-• Güncel fiyat ortalamanın {'altında' if guncel_fiyat < ort_fiyat else 'üstünde'} ({abs(guncel_fiyat - ort_fiyat):.2f} ₺)
-• En yüksek fiyata göre {tasarruf_yuzde:.1f}% tasarruf ediyorsunuz
+* Güncel fiyat ortalamanın {'altında' if guncel_fiyat < ort_fiyat else 'üstünde'} ({abs(guncel_fiyat - ort_fiyat):.2f} ₺)
+* En yüksek fiyata göre {tasarruf_yuzde:.1f}% tasarruf ediyorsunuz
 
 🎯 <b>Satın Alma Önerisi:</b>
-• {'📈 Fiyatlar yükseliş trendinde - Almak için iyi zaman!' if degisim_yuzdesi > 0 else '📉 Fiyatlar düşüş trendinde - Biraz beklemek daha avantajlı olabilir'}
-• {'🟢 Ortalamadan düşük - Uygun fiyat!' if guncel_fiyat < ort_fiyat else '🟡 Ortalamadan yüksek - Beklemek mantıklı'}
+* {'📈 Fiyatlar yükseliş trendinde - Almak için iyi zaman!' if degisim_yuzdesi > 0 else '📉 Fiyatlar düşüş trendinde - Biraz beklemek daha avantajlı olabilir'}
+* {'🟢 Ortalamadan düşük - Uygun fiyat!' if guncel_fiyat < ort_fiyat else '🟡 Ortalamadan yüksek - Beklemek mantıklı'}
 
 ⚡ <b>Fiyat Aralığı:</b> {max_fiyat - min_fiyat:.2f} ₺ fark var (30 günde)
-        """
-        
+"""
+
         self.bilgi_paneli.setHtml(bilgi_metni)
+
 
 def urun_grafik_goster(urun_adi, parent=None):
     """Ürün grafik penceresini aç"""
@@ -432,9 +482,9 @@ def urun_grafik_goster(urun_adi, parent=None):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    
+
     # Test için örnek ürün
-    test_pencere = GrafikPenceresi("iPhone 14 ")
+    test_pencere = GrafikPenceresi("iPhone 14")
     test_pencere.show()
-    
+
     sys.exit(app.exec_())

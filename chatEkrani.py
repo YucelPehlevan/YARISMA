@@ -7,7 +7,7 @@ from urundeneme import urun_grafik_goster
 # Ürün verilerini import et
 try:
     from urunler import telefonlar, bilgisayarlar, kameralar, kulakliklar, tabletler
-    tum_urunler = telefonlar + bilgisayarlar + kameralar
+    tum_urunler = telefonlar + bilgisayarlar + kameralar + kulakliklar + tabletler
 except ImportError:
     print("urunler.py dosyası bulunamadı!")
     tum_urunler = []
@@ -775,7 +775,7 @@ class ChatWindow(QMainWindow):
 
                 oneriler = []
                 for i, satir in enumerate(satirlar):
-                    if satir.startswith("*   **ÜRÜN") or satir.startswith("- **ÜRÜN") or satir.startswith("- **PRODUCT") or satir.startswith("*   **PRODUCT"):
+                    if satir.startswith("2.  **ÜRÜN")or satir.startswith("1.  **ÜRÜN") or satir.startswith("*   **ÜRÜN") or satir.startswith("- **ÜRÜN") or satir.startswith("- **PRODUCT") or satir.startswith("*   **PRODUCT"):
                         oneriler.append(satirlar[i].strip()) 
 
                 if oneriler:
