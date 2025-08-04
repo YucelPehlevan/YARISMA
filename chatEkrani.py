@@ -7,7 +7,7 @@ from urundeneme import urun_grafik_goster
 # Ürün verilerini import et
 try:
     from urunler import telefonlar, bilgisayarlar, kameralar, kulakliklar, tabletler
-    tum_urunler = telefonlar + bilgisayarlar + kameralar + kulakliklar + tabletler
+    tum_urunler = telefonlar + bilgisayarlar + kameralar
 except ImportError:
     print("urunler.py dosyası bulunamadı!")
     tum_urunler = []
@@ -77,8 +77,8 @@ class ChatWindow(QMainWindow):
         """Ürün verilerini cache'le"""
         urun_verisi = ""
         for urun in self.urunler:
-            urun_turu, marka, model, fiyat = urun
-            urun_verisi += f"{urun_turu} - Marka: {marka}, Model: {model}, Fiyat: {fiyat}\n"
+            urun_turu, marka, model, fiyat,ozellikler = urun
+            urun_verisi += f"{urun_turu} - Marka: {marka}, Model: {model}, Özellikler:{ozellikler}, Fiyat: {fiyat}\n"
         return urun_verisi
 
     def periodic_cleanup(self):
@@ -516,7 +516,7 @@ class ChatWindow(QMainWindow):
         1. Kısa selamlama ve ihtiyaç özetı
         2. En uygun 2-3 ürün önerisi (her biri için):
            - **ÜRÜN:** Marka Model (Fiyat)
-           - **NEDEN:** bu ürün? (kişisel özelliklerine uygunluk)
+           - **NEDEN:** bu ürün? (kişisel özelliklerine uygunluk ve genel ürün özellikleri)
            - **AVANTAJLAR:** artı yönleri
            - **DİKKAT:** eksi yönleri
         3. Final önerisi ve nedeni
@@ -610,7 +610,7 @@ class ChatWindow(QMainWindow):
         # Eğer **ÜRÜN:** formatı yoksa, genel ürün adı arama
         if not urun_listesi:
             for urun in self.urunler:
-                urun_turu, marka, model, fiyat = urun
+                urun_turu, marka, model, fiyat, ozellikler = urun
                 tam_ad = f"{marka} {model}"
                 if tam_ad.lower() in ai_cevabi.lower():
                     urun_listesi.append(tam_ad)
@@ -775,7 +775,7 @@ class ChatWindow(QMainWindow):
 
                 oneriler = []
                 for i, satir in enumerate(satirlar):
-                    if satir.startswith("*   **ÜRÜN"):
+                    if satir.startswith("*   **ÜRÜN") or satir.startswith("- **ÜRÜN") or satir.startswith("- **PRODUCT") or satir.startswith("*   **PRODUCT"):
                         oneriler.append(satirlar[i].strip()) 
 
                 if oneriler:
