@@ -460,6 +460,7 @@ class ChatWindow(QMainWindow):
         }
 
     def sendMessage(self):
+        from langdetect import detect
         kullanici_girdisi = self.yazi_kutusu.toPlainText().strip()
         if not kullanici_girdisi:
             return
@@ -479,8 +480,13 @@ class ChatWindow(QMainWindow):
         # Ürün verilerini cache'den al
         urun_verisi = self.get_product_data_formatted()
 
+        dil = detect(kullanici_girdisi)
+        yanit_dili = "Türkçe" if dil == "tr" else "İngilizce"
+
         prompt = f"""
         Sen uzman bir alışveriş danışmanısın. Kullanıcıya kişiselleştirilmiş ürün önerileri sunacaksın.
+
+        🗣️ YANIT DİLİ: {yanit_dili}(yanıtını burdaki dile göre ver)
 
         📋 GÖREV:
         - Kullanıcının ihtiyaçlarını analiz et
@@ -504,7 +510,7 @@ class ChatWindow(QMainWindow):
         - Bütçe: {current_filters['butce']}
         - Marka Tercihi: {current_filters['marka']}
 
-        💬 KULLANICI MESAJI: "{kullanici_girdisi}"
+        💬 KULLANICI MESAJI: "{kullanici_girdisi}"(Bu kısım hangi dilde olursa sen de ona göre cevap ver lütfen)
 
         📝 CEVAP FORMATI:
         1. Kısa selamlama ve ihtiyaç özetı
@@ -526,7 +532,6 @@ class ChatWindow(QMainWindow):
         - Emojiler kullan ama abartma
         - Eğer kullanıcı bir ürünü almaya karar verirse kısa ve samimi bir dille doğru kararı verdiğini söyle
         - Ürün adlarını **ÜRÜN:** ile başlat ki grafik sistemi bulabilsin
-        - KULLANICI MESAJI kısmı hangi dilde olursa yanıtının tamamını o dilde ver(örnek olarak kullanıcı mesajı ingilizce yazarsa ingilizce cevabının tamamını İngilizce dilinde ver)
         """
 
         # Kullanıcı mesajını hemen göster
