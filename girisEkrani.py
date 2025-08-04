@@ -123,13 +123,13 @@ class LoginRegisterWindow(QMainWindow):
         login_title.setFont(QFont("Segoe UI", 24, QFont.Bold))
         login_title.setAlignment(Qt.AlignCenter)
         login_title.setGeometry(50, 30, 350, 50)
-        login_title.setStyleSheet("color: white; background: transparent;")
+        login_title.setStyleSheet("color: white; background: transparent; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3);")
         
         # Email field
         self.email_label = QLabel("📧 E-posta:", self.login_card)
         self.email_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.email_label.setGeometry(50, 120, 350, 30)
-        self.email_label.setStyleSheet("color: white; background: transparent;")
+        self.email_label.setStyleSheet("color: white; background: transparent; border: none;")
         
         self.login_email = QLineEdit(self.login_card)
         self.login_email.setGeometry(50, 155, 350, 55)
@@ -140,7 +140,7 @@ class LoginRegisterWindow(QMainWindow):
         self.password_label = QLabel("🔒 Şifre:", self.login_card)
         self.password_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.password_label.setGeometry(50, 240, 350, 30)
-        self.password_label.setStyleSheet("color: white; background: transparent;")
+        self.password_label.setStyleSheet("color: white; background: transparent; border: none;")
         
         self.login_password = QLineEdit(self.login_card)
         self.login_password.setGeometry(50, 275, 350, 55)
@@ -162,7 +162,7 @@ class LoginRegisterWindow(QMainWindow):
         self.register_card.setStyleSheet("""
             QFrame {
                 background: rgba(255, 255, 255, 0.15);
-                border: 2px solid rgba(255, 255, 255, 0.2);
+                border: none;
                 border-radius: 25px;
                 backdrop-filter: blur(20px);
             }
@@ -173,7 +173,7 @@ class LoginRegisterWindow(QMainWindow):
         register_title.setFont(QFont("Segoe UI", 24, QFont.Bold))
         register_title.setAlignment(Qt.AlignCenter)
         register_title.setGeometry(50, 20, 350, 50)
-        register_title.setStyleSheet("color: white; background: transparent;")
+        register_title.setStyleSheet("color: white; background: transparent; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3);")
         
         # Email and password fields
         self.register_email = QLineEdit(self.register_card)
@@ -191,7 +191,7 @@ class LoginRegisterWindow(QMainWindow):
         personal_info = QLabel("👤 Kişisel Bilgiler", self.register_card)
         personal_info.setFont(QFont("Segoe UI", 14, QFont.Bold))
         personal_info.setGeometry(50, 230, 350, 30)
-        personal_info.setStyleSheet("color: white; background: transparent;")
+        personal_info.setStyleSheet("color: white; background: transparent; border: none;")
         
         # Gender
         self.gender_combo = QComboBox(self.register_card)

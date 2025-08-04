@@ -1,8 +1,11 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+import gc
+from concurrent.futures import ThreadPoolExecutor
 import random
 
+# Tasarım İçin Oluşturulan Sınıflar
 class AnimatedChatBackground(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -276,3 +279,150 @@ class FloatingCard(QFrame):
         self.float_animation.setStartValue(start_pos)
         self.float_animation.setEndValue(end_pos)
         self.float_animation.start()
+
+# Performans için oluşturulan Sınıflar        
+class AICache:
+    """AI yanıtları için cache sistemi"""
+    def __init__(self, max_size=100):
+        self.cache = {}
+        self.max_size = max_size
+        self.access_count = {}
+    
+    def get_cache_key(self, user_input, filters):
+        """Cache anahtarı oluştur"""
+        filters_str = f"{filters.get('urun', '')}-{filters.get('butce', '')}-{filters.get('marka', '')}-{filters.get('kullanim', '')}"
+        return f"{user_input.lower().strip()}-{filters_str}"
+    
+    def get(self, key):
+        """Cache'den veri al"""
+        if key in self.cache:
+            self.access_count[key] = self.access_count.get(key, 0) + 1
+            return self.cache[key]
+        return None
+    
+    def set(self, key, value):
+        """Cache'e veri ekle"""
+        if len(self.cache) >= self.max_size:
+            # En az kullanılan öğeyi sil
+            least_used = min(self.access_count.items(), key=lambda x: x[1])[0]
+            del self.cache[least_used]
+            del self.access_count[least_used]
+        
+        self.cache[key] = value
+        self.access_count[key] = 1
+    
+    def clear(self):
+        """Cache'i temizle"""
+        self.cache.clear()
+        self.access_count.clear()
+
+class MemoryManager:
+    """Bellek yönetimi için sınıf"""
+    def __init__(self, max_conversation_length=50):
+        self.max_conversation_length = max_conversation_length
+        self.cleanup_counter = 0
+    
+    def manage_conversation(self, conversation_history):
+        """Konuşma geçmişini yönet"""
+        if len(conversation_history) > self.max_conversation_length:
+            # Eski mesajları sil, sadece son N tanesini tut
+            conversation_history[:] = conversation_history[-self.max_conversation_length:]
+        
+        self.cleanup_counter += 1
+        if self.cleanup_counter % 10 == 0:
+            # Her 10 mesajda bir garbage collection çalıştır
+            gc.collect()
+    
+    def cleanup_graphics(self, graphics_windows):
+        """Kapalı grafik pencerelerini temizle"""
+        return [window for window in graphics_windows if window and hasattr(window, 'isVisible') and window.isVisible()]
+
+class AsyncAIHandler(QObject):
+    """Async AI işlemleri için handler"""
+    response_ready = pyqtSignal(str, str)  # user_input, ai_response
+    error_occurred = pyqtSignal(str)
+    
+    def __init__(self, api_key, cache_system):
+        super().__init__()
+        self.api_key = api_key
+        self.cache = cache_system
+        self.model = None
+        self.chat = None
+        self.executor = ThreadPoolExecutor(max_workers=2)
+    
+    def initialize_model(self):
+        """Model'i initialize et"""
+        if not self.model:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel("models/gemini-2.0-flash")
+                if not self.chat:
+                    self.chat = self.model.start_chat(history=[])
+            except Exception as e:
+                self.error_occurred.emit(f"Gemini API hatası: {str(e)}")
+                return False
+        return True
+    
+    def send_message_async(self, prompt, user_input, cache_key):
+        """Mesajı async olarak gönder"""
+        future = self.executor.submit(self._send_message_sync, prompt, user_input, cache_key)
+        return future
+    
+    def _send_message_sync(self, prompt, user_input, cache_key):
+        """Senkron mesaj gönderim fonksiyonu"""
+        try:
+            # Cache kontrolü
+            cached_response = self.cache.get(cache_key)
+            if cached_response:
+                self.response_ready.emit(user_input, cached_response)
+                return
+            
+            if not self.initialize_model():
+                return
+            
+            response = self.chat.send_message(prompt)
+            ai_response = response.text
+            
+            # Cache'e kaydet
+            self.cache.set(cache_key, ai_response)
+            
+            self.response_ready.emit(user_input, ai_response)
+            
+        except Exception as e:
+            self.error_occurred.emit(f"AI yanıt hatası: {str(e)}")
+
+class OptimizedTypingTimer(QObject):
+    """Optimize edilmiş typing efekti"""
+    character_typed = pyqtSignal(str)
+    typing_finished = pyqtSignal()
+    
+    def __init__(self):
+        super().__init__()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.type_next_char)
+        self.typing_text = ""
+        self.typing_index = 0
+        self.chunk_size = 3  # Her seferinde 3 karakter ekle (performans için)
+    
+    def start_typing(self, text, speed=10):
+        """Typing efektini başlat"""
+        self.typing_text = text
+        self.typing_index = 0
+        self.timer.start(speed)
+    
+    def type_next_char(self):
+        """Sonraki karakterleri ekle"""
+        if self.typing_index < len(self.typing_text):
+            # Chunk halinde karakterler ekle
+            end_index = min(self.typing_index + self.chunk_size, len(self.typing_text))
+            current_text = self.typing_text[:end_index]
+            self.character_typed.emit(current_text)
+            self.typing_index = end_index
+        else:
+            self.timer.stop()
+            self.typing_finished.emit()
+    
+    def stop_typing(self):
+        """Typing efektini durdur"""
+        self.timer.stop()        
