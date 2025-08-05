@@ -13,7 +13,7 @@ class LoginWindow(QMainWindow):
         super().__init__()
         self.setGeometry(100, 100, 1600, 900)
         self.setWindowTitle("Alışveriş Asistanı - Premium Edition")
-        self.setWindowIcon(QIcon("robot.png"))
+        self.setWindowIcon(QIcon("robot.png")) #<a href="https://www.flaticon.com/free-icons/robot" title="robot icons">Robot icons created by Hilmy Abiyyu A. - Flaticon</a>
         self.gece_modu = True
         
         # modern gorunum için ayarlamalar
@@ -483,9 +483,9 @@ def main():
     uygulama.setStyle('Fusion')  # Modern görünüm
     
     # Uygulama İkonunu ayarla
-    uygulama.setWindowIcon(QIcon("robot.png"))
+    uygulama.setWindowIcon(QIcon("robot.png")) #<a href="https://www.flaticon.com/free-icons/robot" title="robot icons">Robot icons created by Hilmy Abiyyu A. - Flaticon</a>
 
-    acilis_ekran_ikonu = QPixmap("robot.png")  
+    acilis_ekran_ikonu = QPixmap("robot.png")  #<a href="https://www.flaticon.com/free-icons/robot" title="robot icons">Robot icons created by Hilmy Abiyyu A. - Flaticon</a>
     acilis_ekrani = QSplashScreen(acilis_ekran_ikonu, Qt.WindowType.WindowStaysOnTopHint)
     ekranlar = QApplication.screens()
     if len(ekranlar) > 1:
