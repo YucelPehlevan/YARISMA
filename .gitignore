@@ -1,14 +1,7 @@
 .env
-deneme.py
-robot.png
-degiskenler.py
-veriler.json
 __pycache__/
 *.pyc
 gecmisler/
 data/
 *.db
-veritabani.py
-urunler.py
-chat.py
-chat_entegre.py
+

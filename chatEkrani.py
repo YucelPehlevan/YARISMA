@@ -1,10 +1,9 @@
-from girisEkrani import *
-import re
 import threading
 from functools import lru_cache
 from urundeneme import urun_grafik_goster
+from girisEkrani import *
 
-# Ürün verilerini import et
+# Urun verilerini import et
 try:
     from urunler import telefonlar, bilgisayarlar, kameralar, kulakliklar, tabletler
     tum_urunler = telefonlar + bilgisayarlar + kameralar + kulakliklar + tabletler
@@ -22,33 +21,33 @@ class ChatWindow(QMainWindow):
         super().__init__()
         self.setGeometry(50, 50, 1800, 950)
         self.setWindowTitle("✨ Premium Alışveriş Asistanı")
-        self.setWindowIcon(QIcon("robot.png"))
+        self.setWindowIcon(QIcon("robot.png")) #<a href="https://www.flaticon.com/free-icons/robot" title="robot icons">Robot icons created by Hilmy Abiyyu A. - Flaticon</a>
         
-        # Modern window style
+        # Modern pencere stili
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # Performance optimizasyonları
-        self.ai_cache = AICache(max_size=100)
-        self.memory_manager = MemoryManager(max_conversation_length=50)
-        self.ai_handler = AsyncAIHandler(api_key, self.ai_cache)
-        self.typing_timer = OptimizedTypingTimer()
+        # Performans optimizasyonlari
+        self.ai_onbellegi = AICache(max_size=100)
+        self.bellek_yoneticisi = MemoryManager(max_conversation_length=50)
+        self.ai_isleyicisi = AsyncAIHandler(api_key, self.ai_onbellegi)
+        self.yazma_zamanlayicisi = OptimizedTypingTimer()
         
-        # AI handler bağlantıları
-        self.ai_handler.response_ready.connect(self.handle_ai_response)
-        self.ai_handler.error_occurred.connect(self.handle_ai_error)
+        # AI handler baglantilar
+        self.ai_isleyicisi.response_ready.connect(self.ai_cevabini_isle)
+        self.ai_isleyicisi.error_occurred.connect(self.ai_hatasini_isle)
         
-        # Typing timer bağlantıları
-        self.typing_timer.character_typed.connect(self.update_typing_display)
-        self.typing_timer.typing_finished.connect(self.on_typing_finished)
+        # Yazma zamanlayici baglantilari
+        self.yazma_zamanlayicisi.character_typed.connect(self.yazma_ekranini_guncelle)
+        self.yazma_zamanlayicisi.typing_finished.connect(self.yazma_bittiginde)
 
         self.kullanici_email = degiskenler.giris_yapan_email
         self.konusma_gecmisi = []
-        self.gece_modu = False
+        self.gece_modu = True
         self.urunler = tum_urunler
         self.son_onerilen_urunler = []
         self.grafik_pencereleri = []
-        self.current_ai_future = None
+        self.mevcut_ai_gelecegi = None
         
         try:
             self.kullanici_email = degiskenler.giris_yapan_email
@@ -64,67 +63,67 @@ class ChatWindow(QMainWindow):
             self.kullanici_email = "test@example.com"
             self.profil = {}
 
-        self.initUI()
-        self.setup_animations()
+        self.arayuzu_baslat()
+        self.animasyonlari_ayarla()
         
-        # Bellek temizleme timer'ı
-        self.cleanup_timer = QTimer()
-        self.cleanup_timer.timeout.connect(self.periodic_cleanup)
-        self.cleanup_timer.start(30000)  # 30 saniyede bir temizlik
+        # Bellek temizleme zamanlayicisi
+        self.temizlik_zamanlayicisi = QTimer()
+        self.temizlik_zamanlayicisi.timeout.connect(self.periyodik_temizlik)
+        self.temizlik_zamanlayicisi.start(30000)  # 30 saniyede bir temizlik
 
     @lru_cache(maxsize=32)
-    def get_product_data_formatted(self):
-        """Ürün verilerini cache'le"""
+    def urun_verilerini_formatlanmis_al(self):
+        """Urun verilerini onbellekle"""
         urun_verisi = ""
         for urun in self.urunler:
-            urun_turu, marka, model, fiyat,ozellikler = urun
+            urun_turu, marka, model, fiyat, ozellikler = urun
             urun_verisi += f"{urun_turu} - Marka: {marka}, Model: {model}, Özellikler:{ozellikler}, Fiyat: {fiyat}\n"
         return urun_verisi
 
-    def periodic_cleanup(self):
-        """Periyodik bellek temizliği"""
-        # Konuşma geçmişini yönet
-        self.memory_manager.manage_conversation(self.konusma_gecmisi)
+    def periyodik_temizlik(self):
+        """Periyodik bellek temizligi"""
+        # Konusma gecmisini yonet
+        self.bellek_yoneticisi.manage_conversation(self.konusma_gecmisi)
         
-        # Kapalı grafik pencerelerini temizle
-        self.grafik_pencereleri = self.memory_manager.cleanup_graphics(self.grafik_pencereleri)
+        # Kapali grafik pencerelerini temizle
+        self.grafik_pencereleri = self.bellek_yoneticisi.cleanup_graphics(self.grafik_pencereleri)
         
-        # Cache boyutunu kontrol et
-        if len(self.ai_cache.cache) > 80:
-            # Cache'in %20'sini temizle
-            keys_to_remove = list(self.ai_cache.cache.keys())[:20]
-            for key in keys_to_remove:
-                if key in self.ai_cache.cache:
-                    del self.ai_cache.cache[key]
-                if key in self.ai_cache.access_count:
-                    del self.ai_cache.access_count[key]
+        # Onbellek boyutunu kontrol et
+        if len(self.ai_onbellegi.cache) > 80:
+            # Onbellegin %20'sini temizle
+            silinecek_anahtarlar = list(self.ai_onbellegi.cache.keys())[:20]
+            for anahtar in silinecek_anahtarlar:
+                if anahtar in self.ai_onbellegi.cache:
+                    del self.ai_onbellegi.cache[anahtar]
+                if anahtar in self.ai_onbellegi.access_count:
+                    del self.ai_onbellegi.access_count[anahtar]
 
-    def initUI(self):
-        # Main container
-        self.main_container = QWidget(self)
-        self.setCentralWidget(self.main_container)
+    def arayuzu_baslat(self):
+        # Ana konteyner
+        self.ana_konteyner = QWidget(self)
+        self.setCentralWidget(self.ana_konteyner)
         
-        # Animated background
-        self.background = AnimatedChatBackground(self)
-        self.background.setGeometry(0, 0, 1800, 950)
+        # Animasyonlu arkaplan
+        self.arkaplan = AnimatedChatBackground(self)
+        self.arkaplan.setGeometry(0, 0, 1800, 950)
         
-        # Window controls
-        self.init_window_controls()
+        # Pencere kontrolleri
+        self.pencere_kontrollerini_baslat()
         
-        # Header section
-        self.init_header()
+        # Baslik bolumu
+        self.basligi_baslat()
         
-        # Left panel (controls)
-        self.init_left_panel()
+        # Sol panel (kontroller)
+        self.sol_paneli_baslat()
         
-        # Main chat area
-        self.init_chat_area()
+        # Ana sohbet alani
+        self.sohbet_alanini_baslat()
 
-    def init_window_controls(self):
-        # Close button
-        self.close_btn = QPushButton("✕", self)
-        self.close_btn.setGeometry(1740, 20, 40, 40)
-        self.close_btn.setStyleSheet("""
+    def pencere_kontrollerini_baslat(self):
+        # Kapatma butonu
+        self.kapatma_butonu = QPushButton("✕", self)
+        self.kapatma_butonu.setGeometry(1740, 20, 40, 40)
+        self.kapatma_butonu.setStyleSheet("""
             QPushButton {
                 background-color: rgba(239, 68, 68, 0.8);
                 color: white;
@@ -138,12 +137,12 @@ class ChatWindow(QMainWindow):
                 transform: scale(1.1);
             }
         """)
-        self.close_btn.clicked.connect(self.close)
+        self.kapatma_butonu.clicked.connect(self.close)
         
-        # Minimize button
-        self.min_btn = QPushButton("—", self)
-        self.min_btn.setGeometry(1690, 20, 40, 40)
-        self.min_btn.setStyleSheet("""
+        # Kucultme butonu
+        self.kucultme_butonu = QPushButton("—", self)
+        self.kucultme_butonu.setGeometry(1690, 20, 40, 40)
+        self.kucultme_butonu.setStyleSheet("""
             QPushButton {
                 background-color: rgba(251, 191, 36, 0.8);
                 color: white;
@@ -156,15 +155,15 @@ class ChatWindow(QMainWindow):
                 background-color: rgba(251, 191, 36, 1);
             }
         """)
-        self.min_btn.clicked.connect(self.showMinimized)
+        self.kucultme_butonu.clicked.connect(self.showMinimized)
 
-    def init_header(self):
-        # Title
-        self.title_label = QLabel("🤖 Premium AI Shopping Assistant", self)
-        self.title_label.setFont(QFont("Segoe UI", 24, QFont.Bold))
-        self.title_label.setAlignment(Qt.AlignCenter)
-        self.title_label.setGeometry(400, 30, 1000, 50)
-        self.title_label.setStyleSheet("""
+    def basligi_baslat(self):
+        # Baslik
+        self.baslik_etiketi = QLabel("🤖 Premium AI Shopping Assistant", self)
+        self.baslik_etiketi.setFont(QFont("Segoe UI", 24, QFont.Bold))
+        self.baslik_etiketi.setAlignment(Qt.AlignCenter)
+        self.baslik_etiketi.setGeometry(400, 30, 1000, 50)
+        self.baslik_etiketi.setStyleSheet("""
             QLabel {
                 color: white;
                 background: transparent;
@@ -172,22 +171,22 @@ class ChatWindow(QMainWindow):
             }
         """)
         
-        # User info
-        self.user_info = QLabel(f"👤 Hoş geldin, {self.kullanici_email}", self)
-        self.user_info.setFont(QFont("Segoe UI", 12))
-        self.user_info.setGeometry(50, 30, 300, 30)
-        self.user_info.setStyleSheet("""
+        # Kullanici bilgisi
+        self.kullanici_bilgisi = QLabel(f"👤 Hoş geldin, {self.kullanici_email}", self)
+        self.kullanici_bilgisi.setFont(QFont("Segoe UI", 12))
+        self.kullanici_bilgisi.setGeometry(50, 30, 300, 30)
+        self.kullanici_bilgisi.setStyleSheet("""
             QLabel {
                 color: rgba(255, 255, 255, 0.9);
                 background: transparent;
             }
         """)
 
-    def init_left_panel(self):
-        # Left control panel
-        self.left_panel = GlassmorphismFrame(self)
-        self.left_panel.setGeometry(30, 100, 320, 800)
-        self.left_panel.setStyleSheet("""
+    def sol_paneli_baslat(self):
+        # Sol kontrol paneli
+        self.sol_panel = GlassmorphismFrame(self)
+        self.sol_panel.setGeometry(30, 100, 320, 800)
+        self.sol_panel.setStyleSheet("""
             QFrame {
                 background: rgba(255, 255, 255, 0.1);
                 border: 2px solid rgba(255, 255, 255, 0.2);
@@ -196,78 +195,78 @@ class ChatWindow(QMainWindow):
             }
         """)
         
-        # Panel title
-        panel_title = QLabel("🎯 Arama Filtreleri", self.left_panel)
-        panel_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        panel_title.setGeometry(20, 20, 280, 40)
-        panel_title.setStyleSheet("color: white; background: transparent; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3);")
+        # Panel basligi
+        panel_basligi = QLabel("🎯 Arama Filtreleri", self.sol_panel)
+        panel_basligi.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        panel_basligi.setGeometry(20, 20, 280, 40)
+        panel_basligi.setStyleSheet("color: white; background: transparent; border: none; border-bottom: 2px solid rgba(255, 255, 255, 0.3);")
         
-        # Product type
-        self.urun_label = QLabel("📱 Ürün Türü:", self.left_panel)
-        self.urun_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.urun_label.setGeometry(20, 80, 280, 30)
-        self.urun_label.setStyleSheet("color: white; background: transparent; border: none;")
+        # Urun turu
+        self.urun_etiketi = QLabel("📱 Ürün Türü:", self.sol_panel)
+        self.urun_etiketi.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.urun_etiketi.setGeometry(20, 80, 280, 30)
+        self.urun_etiketi.setStyleSheet("color: white; background: transparent; border: none;")
         
-        self.urun_kutusu = QComboBox(self.left_panel)
+        self.urun_kutusu = QComboBox(self.sol_panel)
         self.urun_kutusu.addItems(degiskenler.urun_listesi)
         self.urun_kutusu.setGeometry(20, 115, 280, 50)
-        self.urun_kutusu.setStyleSheet(degiskenler.modern_combobox_style)
+        self.urun_kutusu.setStyleSheet(degiskenler.modern_combobox_stili)
         self.urun_kutusu.currentTextChanged.connect(self.urun_degistir)
         
-        # Budget
-        self.butce_label = QLabel("💰 Bütçe Aralığı:", self.left_panel)
-        self.butce_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.butce_label.setGeometry(20, 185, 280, 30)
-        self.butce_label.setStyleSheet("color: white; background: transparent; border: none;")
+        # Butce
+        self.butce_etiketi = QLabel("💰 Bütçe Aralığı:", self.sol_panel)
+        self.butce_etiketi.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.butce_etiketi.setGeometry(20, 185, 280, 30)
+        self.butce_etiketi.setStyleSheet("color: white; background: transparent; border: none;")
         
-        self.butce_kutusu = QComboBox(self.left_panel)
+        self.butce_kutusu = QComboBox(self.sol_panel)
         self.butce_kutusu.addItems(degiskenler.butce_listesi)
         self.butce_kutusu.setGeometry(20, 220, 280, 50)
-        self.butce_kutusu.setStyleSheet(degiskenler.modern_combobox_style)
+        self.butce_kutusu.setStyleSheet(degiskenler.modern_combobox_stili)
         
-        # Brand
-        self.marka_label = QLabel("🏷️ Marka Tercihi:", self.left_panel)
-        self.marka_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.marka_label.setGeometry(20, 290, 280, 30)
-        self.marka_label.setStyleSheet("color: white; background: transparent; border: none;")
+        # Marka
+        self.marka_etiketi = QLabel("🏷️ Marka Tercihi:", self.sol_panel)
+        self.marka_etiketi.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.marka_etiketi.setGeometry(20, 290, 280, 30)
+        self.marka_etiketi.setStyleSheet("color: white; background: transparent; border: none;")
         
-        self.marka_kutusu = QComboBox(self.left_panel)
+        self.marka_kutusu = QComboBox(self.sol_panel)
         self.marka_kutusu.addItems(degiskenler.tum_markalar)
         self.marka_kutusu.setGeometry(20, 325, 280, 50)
-        self.marka_kutusu.setStyleSheet(degiskenler.modern_combobox_style)
+        self.marka_kutusu.setStyleSheet(degiskenler.modern_combobox_stili)
         
-        # Usage purpose
-        self.kullanim_label = QLabel("🎯 Kullanım Amacı:", self.left_panel)
-        self.kullanim_label.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.kullanim_label.setGeometry(20, 395, 280, 30)
-        self.kullanim_label.setStyleSheet("color: white; background: transparent; border: none;")
+        # Kullanim amaci
+        self.kullanim_etiketi = QLabel("🎯 Kullanım Amacı:", self.sol_panel)
+        self.kullanim_etiketi.setFont(QFont("Segoe UI", 12, QFont.Bold))
+        self.kullanim_etiketi.setGeometry(20, 395, 280, 30)
+        self.kullanim_etiketi.setStyleSheet("color: white; background: transparent; border: none;")
         
-        self.kullanim_kutusu = QComboBox(self.left_panel)
+        self.kullanim_kutusu = QComboBox(self.sol_panel)
         self.kullanim_kutusu.addItems(degiskenler.tum_kullanim_amaclari)
         self.kullanim_kutusu.setGeometry(20, 430, 280, 50)
-        self.kullanim_kutusu.setStyleSheet(degiskenler.modern_combobox_style)
+        self.kullanim_kutusu.setStyleSheet(degiskenler.modern_combobox_stili)
         
-        # Action buttons
-        self.init_action_buttons()
+        # Eylem butonlari
+        self.eylem_butonlarini_baslat()
 
-    def init_action_buttons(self):
-        # Previous recommendations
-        self.oneri_butonu = ModernButton("📋 Önceki Öneriler", self.left_panel)
+    def eylem_butonlarini_baslat(self):
+        # Onceki oneriler
+        self.oneri_butonu = ModernButton("📋 Önceki Öneriler", self.sol_panel)
         self.oneri_butonu.setGeometry(20, 510, 280, 55)
         self.oneri_butonu.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.oneri_butonu.setStyleSheet(degiskenler.premium_button_style)
+        self.oneri_butonu.setStyleSheet(degiskenler.modern_buton_stili)
         self.oneri_butonu.clicked.connect(self.onceki_onerileri_goster)
         
-        # Charts button
-        self.grafik_butonu = ModernButton("📊 Grafik Göster", self.left_panel)
+        # Grafik butonu
+        self.grafik_butonu = ModernButton("📊 Grafik Göster", self.sol_panel)
         self.grafik_butonu.setGeometry(20, 580, 280, 55)
         self.grafik_butonu.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.grafik_butonu.setStyleSheet(degiskenler.premium_button_style_2)
+        self.grafik_butonu.setStyleSheet(degiskenler.modern_buton_stili_2)
         self.grafik_butonu.clicked.connect(self.grafik_goster)
         self.grafik_butonu.setEnabled(False)
         
-        # Clear chat
-        self.temizleme_butonu = ModernButton("🗑️ Sohbeti Temizle", self.left_panel)
+        # Sohbet temizleme
+        self.temizleme_butonu = ModernButton("🗑️ Sohbeti Temizle", self.sol_panel)
         self.temizleme_butonu.setGeometry(20, 650, 280, 55)
         self.temizleme_butonu.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.temizleme_butonu.setStyleSheet("""
@@ -287,15 +286,15 @@ class ChatWindow(QMainWindow):
         """)
         self.temizleme_butonu.clicked.connect(self.sohbet_gecmisini_temizle)
         
-        # Mode toggle
-        self.mod_butonu = ModernButton("🌙 Gece Modu", self.left_panel)
+        # Mod degistirme
+        self.mod_butonu = ModernButton("☀️ Gündüz", self.sol_panel)
         self.mod_butonu.setGeometry(20, 720, 135, 55)
         self.mod_butonu.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.mod_butonu.setStyleSheet(degiskenler.mode_button_style)
         self.mod_butonu.clicked.connect(self.mod_degistir)
         
-        # Logout
-        self.cikis_butonu = ModernButton("🚪 Çıkış", self.left_panel)
+        # Cikis
+        self.cikis_butonu = ModernButton("🚪 Çıkış", self.sol_panel)
         self.cikis_butonu.setGeometry(165, 720, 135, 55)
         self.cikis_butonu.setFont(QFont("Segoe UI", 12, QFont.Bold))
         self.cikis_butonu.setStyleSheet("""
@@ -315,11 +314,11 @@ class ChatWindow(QMainWindow):
         """)
         self.cikis_butonu.clicked.connect(self.cikis_yap)
 
-    def init_chat_area(self):
-        # Chat container
-        self.chat_container = GlassmorphismFrame(self)
-        self.chat_container.setGeometry(380, 100, 1380, 800)
-        self.chat_container.setStyleSheet("""
+    def sohbet_alanini_baslat(self):
+        # Sohbet konteyneri
+        self.sohbet_konteyneri = GlassmorphismFrame(self)
+        self.sohbet_konteyneri.setGeometry(380, 100, 1380, 800)
+        self.sohbet_konteyneri.setStyleSheet("""
             QFrame {
                 background: rgba(255, 255, 255, 0.1);
                 border: 2px solid rgba(255, 255, 255, 0.2);
@@ -328,10 +327,10 @@ class ChatWindow(QMainWindow):
             }
         """)
         
-        # Input area
-        self.input_area = GlassmorphismFrame(self.chat_container)
-        self.input_area.setGeometry(20, 20, 1340, 200)
-        self.input_area.setStyleSheet("""
+        # Girdi alani
+        self.girdi_alani = GlassmorphismFrame(self.sohbet_konteyneri)
+        self.girdi_alani.setGeometry(20, 20, 1340, 200)
+        self.girdi_alani.setStyleSheet("""
             QFrame {
                 background: rgba(255, 255, 255, 0.05);
                 border: 2px solid rgba(255, 255, 255, 0.1);
@@ -339,14 +338,14 @@ class ChatWindow(QMainWindow):
             }
         """)
         
-        # Input label
-        input_label = QLabel("💬 Sorununuzu yazın:", self.input_area)
-        input_label.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        input_label.setGeometry(20, 15, 250, 30)
-        input_label.setStyleSheet("color: white; background: transparent; border: none;")
+        # Girdi etiketi
+        girdi_etiketi = QLabel("💬 Sorununuzu yazın:", self.girdi_alani)
+        girdi_etiketi.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        girdi_etiketi.setGeometry(20, 15, 250, 30)
+        girdi_etiketi.setStyleSheet("color: white; background: transparent; border: none;")
         
-        # Text input
-        self.yazi_kutusu = QTextEdit(self.input_area)
+        # Metin girdisi
+        self.yazi_kutusu = QTextEdit(self.girdi_alani)
         self.yazi_kutusu.setGeometry(20, 50, 1000, 120)
         self.yazi_kutusu.setPlaceholderText("Bugün hangi ürünü arıyorsunuz? Detaylı sorularınızı buraya yazabilirsiniz...")
         self.yazi_kutusu.setStyleSheet("""
@@ -367,8 +366,8 @@ class ChatWindow(QMainWindow):
             }
         """)
         
-        # Send button
-        self.mesaj_butonu = ModernButton("🚀 Gönder", self.input_area)
+        # Gonderme butonu
+        self.mesaj_butonu = ModernButton("🚀 Gönder", self.girdi_alani)
         self.mesaj_butonu.setGeometry(1040, 60, 280, 100)
         self.mesaj_butonu.setFont(QFont("Segoe UI", 16, QFont.Bold))
         self.mesaj_butonu.setStyleSheet("""
@@ -395,10 +394,10 @@ class ChatWindow(QMainWindow):
                 transform: translateY(0px);
             }
         """)
-        self.mesaj_butonu.clicked.connect(self.sendMessage)
+        self.mesaj_butonu.clicked.connect(self.mesaj_gonder)
         
-        # Chat display area
-        self.sonuc_kutusu = QTextEdit(self.chat_container)
+        # Sohbet gosterim alani
+        self.sonuc_kutusu = QTextEdit(self.sohbet_konteyneri)
         self.sonuc_kutusu.setGeometry(20, 240, 1340, 490)
         self.sonuc_kutusu.setReadOnly(True)
         self.sonuc_kutusu.setStyleSheet("""
@@ -427,31 +426,31 @@ class ChatWindow(QMainWindow):
             }
         """)
 
-    def setup_animations(self):
-        # Title entrance animation
-        self.title_animation = QPropertyAnimation(self.title_label, b"pos")
-        self.title_animation.setDuration(1000)
-        self.title_animation.setEasingCurve(QEasingCurve.OutBounce)
+    def animasyonlari_ayarla(self):
+        # Baslik giris animasyonu
+        self.baslik_animasyonu = QPropertyAnimation(self.baslik_etiketi, b"pos")
+        self.baslik_animasyonu.setDuration(1000)
+        self.baslik_animasyonu.setEasingCurve(QEasingCurve.OutBounce)
         
-        start_pos = QPoint(400, -50)
-        end_pos = QPoint(400, 30)
-        self.title_animation.setStartValue(start_pos)
-        self.title_animation.setEndValue(end_pos)
-        self.title_animation.start()
+        baslangic_pozisyonu = QPoint(400, -50)
+        bitis_pozisyonu = QPoint(400, 30)
+        self.baslik_animasyonu.setStartValue(baslangic_pozisyonu)
+        self.baslik_animasyonu.setEndValue(bitis_pozisyonu)
+        self.baslik_animasyonu.start()
         
-        # Panel slide animation
-        self.panel_animation = QPropertyAnimation(self.left_panel, b"pos")
-        self.panel_animation.setDuration(800)
-        self.panel_animation.setEasingCurve(QEasingCurve.OutCubic)
+        # Panel kayma animasyonu
+        self.panel_animasyonu = QPropertyAnimation(self.sol_panel, b"pos")
+        self.panel_animasyonu.setDuration(800)
+        self.panel_animasyonu.setEasingCurve(QEasingCurve.OutCubic)
         
-        panel_start = QPoint(-350, 100)
-        panel_end = QPoint(30, 100)
-        self.panel_animation.setStartValue(panel_start)
-        self.panel_animation.setEndValue(panel_end)
-        self.panel_animation.start()
+        panel_baslangici = QPoint(-350, 100)
+        panel_bitisi = QPoint(30, 100)
+        self.panel_animasyonu.setStartValue(panel_baslangici)
+        self.panel_animasyonu.setEndValue(panel_bitisi)
+        self.panel_animasyonu.start()
 
-    def get_current_filters(self):
-        """Mevcut filtreleri dict olarak döndür"""
+    def mevcut_filtreleri_al(self):
+        """Mevcut filtreleri dict olarak dondur"""
         return {
             'urun': self.urun_kutusu.currentText(),
             'butce': self.butce_kutusu.currentText(),
@@ -459,31 +458,31 @@ class ChatWindow(QMainWindow):
             'kullanim': self.kullanim_kutusu.currentText()
         }
 
-    def sendMessage(self):
+    def mesaj_gonder(self):
         from langdetect import detect
         kullanici_girdisi = self.yazi_kutusu.toPlainText().strip()
         if not kullanici_girdisi:
             return
 
-        # Eğer önceki bir AI isteği varsa iptal et
-        if self.current_ai_future and not self.current_ai_future.done():
-            self.current_ai_future.cancel()
+        # Eger onceki bir AI istegi varsa iptal et
+        if self.mevcut_ai_gelecegi and not self.mevcut_ai_gelecegi.done():
+            self.mevcut_ai_gelecegi.cancel()
 
-        # Send butonunu geçici olarak deaktif et
+        # Send butonunu gecici olarak deaktif et
         self.mesaj_butonu.setEnabled(False)
         self.mesaj_butonu.setText("⏳ İşleniyor...")
 
-        # Cache key oluştur
-        current_filters = self.get_current_filters()
-        cache_key = self.ai_cache.get_cache_key(kullanici_girdisi, current_filters)
+        # Onbellek anahtari olustur
+        mevcut_filtreler = self.mevcut_filtreleri_al()
+        onbellek_anahtari = self.ai_onbellegi.get_cache_key(kullanici_girdisi, mevcut_filtreler)
 
-        # Ürün verilerini cache'den al
-        urun_verisi = self.get_product_data_formatted()
+        # Urun verilerini onbellekten al
+        urun_verisi = self.urun_verilerini_formatlanmis_al()
 
         dil = detect(kullanici_girdisi)
         yanit_dili = "Türkçe" if dil == "tr" else "İngilizce"
 
-        prompt = f"""
+        komut = f"""
         Sen uzman bir alışveriş danışmanısın. Kullanıcıya kişiselleştirilmiş ürün önerileri sunacaksın.
 
         🗣️ YANIT DİLİ: {yanit_dili}(yanıtını burdaki dile göre ver)
@@ -505,10 +504,10 @@ class ChatWindow(QMainWindow):
         - Fiziksel Özellikler: Boy {self.profil.get('boy', 'Belirtilmemiş')}, Kilo {self.profil.get('kilo', 'Belirtilmemiş')}
 
         🎯 KULLANICI TALEPLERİ:
-        - Aranan Ürün: {current_filters['urun']}
-        - Kullanım Amacı: {current_filters['kullanim']}
-        - Bütçe: {current_filters['butce']}
-        - Marka Tercihi: {current_filters['marka']}
+        - Aranan Ürün: {mevcut_filtreler['urun']}
+        - Kullanım Amacı: {mevcut_filtreler['kullanim']}
+        - Bütçe: {mevcut_filtreler['butce']}
+        - Marka Tercihi: {mevcut_filtreler['marka']}
 
         💬 KULLANICI MESAJI: "{kullanici_girdisi}"(Bu kısım hangi dilde olursa sen de ona göre cevap ver lütfen)
 
@@ -526,7 +525,7 @@ class ChatWindow(QMainWindow):
         ⚡ KURALLAR:
         - Samimi ve profesyonel ol
         - Sadece mevcut ürünlerden öner
-        - Bütçe '-' ise bütçe sor
+        - Bütçe '-' ise önce 2 tane ürün öner sonra bütçe sor
         - Marka 'Farketmez' ise marka sorma
         - Çok detaya girme, net ol
         - Emojiler kullan ama abartma
@@ -534,23 +533,23 @@ class ChatWindow(QMainWindow):
         - Ürün adlarını **ÜRÜN:** ile başlat ki grafik sistemi bulabilsin
         """
 
-        # Kullanıcı mesajını hemen göster
+        # Kullanici mesajini hemen goster
         self.konusma_gecmisi.append(f"<div style='background: rgba(99, 102, 241, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0;'><b><span style='color: #60a5fa;'>🧑 Siz:</span></b><br>{kullanici_girdisi}</div>")
         self.konusma_gecmisi.append(f"<div style='background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0;'><b><span style='color: #34d399;'>🤖 AI Asistan:</span></b><br>")
         self.sonuc_kutusu.setHtml("".join(self.konusma_gecmisi))
 
-        # Async AI işlemini başlat
-        self.current_ai_future = self.ai_handler.send_message_async(prompt, kullanici_girdisi, cache_key)
+        # Async AI islemini baslat
+        self.mevcut_ai_gelecegi = self.ai_isleyicisi.send_message_async(komut, kullanici_girdisi, onbellek_anahtari)
 
         self.yazi_kutusu.clear()
 
-    def handle_ai_response(self, user_input, ai_response):
-        """AI yanıtını işle"""
+    def ai_cevabini_isle(self, kullanici_girdisi, ai_cevabi):
+        """AI yanitini isle"""
         # Sohbeti kaydet
-        self.sohbeti_kaydet(user_input, ai_response)
+        self.sohbeti_kaydet(kullanici_girdisi, ai_cevabi)
 
-        # Önerilen ürünleri çıkar
-        self.son_onerilen_urunler = self.urun_adlarini_cikart(ai_response)
+        # Onerilen urunleri cikar
+        self.son_onerilen_urunler = self.urun_adlarini_cikart(ai_cevabi)
         
         # Grafik butonunu aktif et
         if self.son_onerilen_urunler:
@@ -560,54 +559,55 @@ class ChatWindow(QMainWindow):
             self.grafik_butonu.setEnabled(False)
             self.grafik_butonu.setText("📊 Grafik Göster")
 
-        # Typing efektini başlat
-        formatli_cevap = self.ai_cevabini_formatla(ai_response)
-        self.typing_timer.start_typing(formatli_cevap, speed=10)
+        # Yazma efektini baslat
+        formatli_cevap = self.ai_cevabini_formatla(ai_cevabi)
+        self.yazma_zamanlayicisi.start_typing(formatli_cevap, speed=10)
 
         # Send butonunu tekrar aktif et
         self.mesaj_butonu.setEnabled(True)
         self.mesaj_butonu.setText("🚀 Gönder")
 
-    def handle_ai_error(self, error_message):
-        """AI hatasını işle"""
-        error_html = f"<div style='background: rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0; text-align: center;'><b style='color: #f87171;'>❌ Hata: {error_message}</b></div>"
-        self.konusma_gecmisi.append(error_html)
+    def ai_hatasini_isle(self, hata_mesaji):
+        """AI hatasini isle"""
+        hata_html = f"<div style='background: rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0; text-align: center;'><b style='color: #f87171;'>❌ Hata: {hata_mesaji}</b></div>"
+        self.konusma_gecmisi.append(hata_html)
         self.sonuc_kutusu.setHtml("".join(self.konusma_gecmisi))
         
         # Send butonunu tekrar aktif et
         self.mesaj_butonu.setEnabled(True)
         self.mesaj_butonu.setText("🚀 Gönder")
 
-    def update_typing_display(self, current_text):
-        """Typing efekti sırasında ekranı güncelle"""
-        full_html = "".join(self.konusma_gecmisi[:-1]) + f"<div style='background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0;'><b><span style='color: #34d399;'>🤖 AI Asistan:</span></b><br>{current_text}</div>"
-        self.sonuc_kutusu.setHtml(full_html)
+    def yazma_ekranini_guncelle(self, mevcut_metin):
+        """Yazma efekti sirasinda ekrani guncelle"""
+        tam_html = "".join(self.konusma_gecmisi[:-1]) + f"<div style='background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0;'><b><span style='color: #34d399;'>🤖 AI Asistan:</span></b><br>{mevcut_metin}</div>"
+        self.sonuc_kutusu.setHtml(tam_html)
         
-        # Otomatik scroll
-        scrollbar = self.sonuc_kutusu.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        # Otomatik kaydirma
+        kaydirma_cubugu = self.sonuc_kutusu.verticalScrollBar()
+        kaydirma_cubugu.setValue(kaydirma_cubugu.maximum())
 
-    def on_typing_finished(self):
-        """Typing efekti bittiğinde"""
-        # Son HTML'i konuşma geçmişine ekle
+    def yazma_bittiginde(self):
+        """Yazma efekti bittiginde"""
+        # Son HTML'i konusma gecmisine ekle
         if self.konusma_gecmisi:
-            self.konusma_gecmisi[-1] += f"{self.typing_timer.typing_text}</div>"
+            self.konusma_gecmisi[-1] += f"{self.yazma_zamanlayicisi.typing_text}</div>"
 
     @lru_cache(maxsize=16)
     def urun_adlarini_cikart(self, ai_cevabi):
-        """AI cevabından ürün adlarını çıkarır - cache'li"""
+        from re import findall
+        """AI cevabindan urun adlarini cikarir - onbellekli"""
         urun_listesi = []
         
-        # **ÜRÜN:** ile başlayan satırları bul
-        urun_pattern = r'\*\*ÜRÜN:\*\*\s*([^(]+)'
-        urun_eslesmeleri = re.findall(urun_pattern, ai_cevabi)
+        # **ÜRÜN:** ile baslayan satirlari bul
+        urun_deseni = r'\*\*ÜRÜN:\*\*\s*([^(]+)'
+        urun_eslesmeler = findall(urun_deseni, ai_cevabi)
         
-        for urun in urun_eslesmeleri:
+        for urun in urun_eslesmeler:
             temiz_urun = urun.strip()
             if temiz_urun:
                 urun_listesi.append(temiz_urun)
         
-        # Eğer **ÜRÜN:** formatı yoksa, genel ürün adı arama
+        # Eger **ÜRÜN:** formati yoksa, genel urun adi arama
         if not urun_listesi:
             for urun in self.urunler:
                 urun_turu, marka, model, fiyat, ozellikler = urun
@@ -618,18 +618,18 @@ class ChatWindow(QMainWindow):
         return list(set(urun_listesi))  # tuple for hashability
 
     def grafik_goster(self):
-        """Önerilen ürünler için grafik pencerelerini aç"""
+        """Onerilen urunler icin grafik pencerelerini ac"""
         if not self.son_onerilen_urunler:
             QMessageBox.information(self, "Bilgi", "Önce bir ürün önerisi alın!")
             return
         
         try:
-            # Her önerilen ürün için grafik penceresi aç
+            # Her onerilen urun icin grafik penceresi ac
             for urun_adi in self.son_onerilen_urunler:
                 grafik_penceresi = urun_grafik_goster(urun_adi, self)
                 self.grafik_pencereleri.append(grafik_penceresi)
             
-            # Başarı mesajı
+            # Basari mesaji
             QMessageBox.information(self, "Başarılı", 
                                   f"{len(self.son_onerilen_urunler)} ürün için grafik pencereleri açıldı!")
             
@@ -639,37 +639,37 @@ class ChatWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Hata", f"Grafik gösterilirken hata oluştu: {str(e)}")
 
-    def grafik_acildi(self, new_windows):
-        """Grafik pencereleri başarıyla açıldığında"""
-        self.grafik_pencereleri.extend(new_windows)
-        self.show_modern_message("Başarılı", 
+    def grafik_acildi(self, yeni_pencereler):
+        """Grafik pencereleri basariyla acildiginda"""
+        self.grafik_pencereleri.extend(yeni_pencereler)
+        self.modern_mesaj_goster("Başarılı", 
                               f"✨ {len(self.son_onerilen_urunler)} ürün için grafik pencereleri açıldı!", "success")
         
         # Butonu tekrar aktif et
         self.grafik_butonu.setEnabled(True)
         self.grafik_butonu.setText(f"📊 Grafik Göster ({len(self.son_onerilen_urunler)} ürün)")
 
-    def grafik_hatasi(self, error_msg):
-        """Grafik hatası durumunda"""
-        if "ImportError" in error_msg or "matplotlib" in error_msg:
-            self.show_modern_message("Hata", 
+    def grafik_hatasi(self, hata_mesaji):
+        """Grafik hatasi durumunda"""
+        if "ImportError" in hata_mesaji or "matplotlib" in hata_mesaji:
+            self.modern_mesaj_goster("Hata", 
                               "📊 Grafik modülü yüklenemiyor! matplotlib yüklü olduğundan emin olun.", "error")
         else:
-            self.show_modern_message("Hata", f"📊 Grafik gösterilirken hata oluştu: {error_msg}", "error")
+            self.modern_mesaj_goster("Hata", f"📊 Grafik gösterilirken hata oluştu: {hata_mesaji}", "error")
         
         # Butonu tekrar aktif et
         self.grafik_butonu.setEnabled(True)
         self.grafik_butonu.setText(f"📊 Grafik Göster ({len(self.son_onerilen_urunler)} ürün)")
 
-    def show_modern_message(self, title, message, msg_type):
-        """Modern mesaj kutusu göster"""
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
+    def modern_mesaj_goster(self, baslik, mesaj, mesaj_turu):
+        """Modern mesaj kutusu goster"""
+        mesaj_kutusu = QMessageBox(self)
+        mesaj_kutusu.setWindowTitle(baslik)
+        mesaj_kutusu.setText(mesaj)
         
-        if msg_type == "success":
-            msg_box.setIcon(QMessageBox.Information)
-            style = """
+        if mesaj_turu == "success":
+            mesaj_kutusu.setIcon(QMessageBox.Information)
+            stil = """
                 QMessageBox {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                                               stop:0 #d1fae5, stop:1 #a7f3d0);
@@ -696,9 +696,9 @@ class ChatWindow(QMainWindow):
                     background: #059669;
                 }
             """
-        elif msg_type == "info":
-            msg_box.setIcon(QMessageBox.Information)
-            style = """
+        elif mesaj_turu == "info":
+            mesaj_kutusu.setIcon(QMessageBox.Information)
+            stil = """
                 QMessageBox {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                                               stop:0 #dbeafe, stop:1 #bfdbfe);
@@ -726,8 +726,8 @@ class ChatWindow(QMainWindow):
                 }
             """
         else:  # error
-            msg_box.setIcon(QMessageBox.Critical)
-            style = """
+            mesaj_kutusu.setIcon(QMessageBox.Critical)
+            stil = """
                 QMessageBox {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                                               stop:0 #fee2e2, stop:1 #fecaca);
@@ -755,14 +755,14 @@ class ChatWindow(QMainWindow):
                 }
             """
         
-        msg_box.setStyleSheet(style)
-        msg_box.exec_()
+        mesaj_kutusu.setStyleSheet(stil)
+        mesaj_kutusu.exec_()
     
     def onceki_onerileri_goster(self):
-        """Önceki önerileri göster - optimize edilmiş"""
+        """Onceki onerileri goster - optimize edilmis"""
         self.sonuc_kutusu.clear()
-        def load_recommendations():
-            """Önerileri arka planda yükle"""
+        def onerileri_yukle():
+            """Onerileri arka planda yukle"""
             try:
                 email = degiskenler.giris_yapan_email
                 dosya_yolu = f"gecmisler/{email}.txt"
@@ -775,7 +775,7 @@ class ChatWindow(QMainWindow):
 
                 oneriler = []
                 for i, satir in enumerate(satirlar):
-                    if satir.startswith("2.  **ÜRÜN")or satir.startswith("1.  **ÜRÜN") or satir.startswith("*   **ÜRÜN") or satir.startswith("- **ÜRÜN") or satir.startswith("- **PRODUCT") or satir.startswith("*   **PRODUCT"):
+                    if satir.startswith("   - **ÜRÜN") or satir.startswith("   - **PRODUCT") or satir.startswith("2.  **ÜRÜN")or satir.startswith("1.  **ÜRÜN") or satir.startswith("*   **ÜRÜN") or satir.startswith("- **ÜRÜN") or satir.startswith("- **PRODUCT") or satir.startswith("*   **PRODUCT"):
                         oneriler.append(satirlar[i].strip()) 
 
                 if oneriler:
@@ -783,24 +783,23 @@ class ChatWindow(QMainWindow):
                 else:
                     mesaj = "Daha önce sana özel bir ürün önerisi sunulmamış."
                 self.sonuc_kutusu.append(mesaj)
+                return oneriler
             except:
                 self.sonuc_kutusu.append("Bir hata oluştu")     
 
-        # Arka planda yükle
-        def process_recommendations():
-            oneriler, error = load_recommendations()
-            QTimer.singleShot(0, lambda: self.onerileri_goster(oneriler, error))
+        # Arka planda yukle
+        def onerileri_isle():
+            oneriler = onerileri_yukle()
+            QTimer.singleShot(0, lambda: self.onerileri_goster(oneriler))
 
-        threading.Thread(target=process_recommendations, daemon=True).start()
+        threading.Thread(target=onerileri_isle, daemon=True).start()
 
-    def onerileri_goster(self, oneriler, error):
-        """Önerileri ana thread'de göster"""
-        if error:
-            oneri_html = f"<div style='background: rgba(251, 191, 36, 0.2); padding: 15px; border-radius: 15px; margin: 10px 0; text-align: center;'><b>📝 {error}</b></div>"
-        elif oneriler:
+    def onerileri_goster(self, oneriler):
+        """Onerileri ana thread'de goster"""
+        if oneriler:
             oneri_html = "<div style='background: rgba(168, 85, 247, 0.2); padding: 20px; border-radius: 15px; margin: 10px 0;'>"
             oneri_html += "<h3 style='color: #a855f7; margin-bottom: 15px;'>📋 Önceki Ürün Önerileriniz</h3>"
-            for i, oneri in enumerate(oneriler[:10], 1):  # Son 10 öneri
+            for i, oneri in enumerate(oneriler[:10], 1):  # Son 10 oneri
                 oneri_html += f"<div style='margin: 8px 0; padding: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 8px;'>{i}. {oneri}</div>"
             oneri_html += "</div>"
         else:
@@ -810,7 +809,7 @@ class ChatWindow(QMainWindow):
         self.sonuc_kutusu.setHtml("".join(self.konusma_gecmisi))
 
     def urun_degistir(self, secilen_urun):
-        """Ürün değiştiğinde markaları ve kullanım amaçlarını güncelle"""
+        """Urun degistiginde markalari ve kullanim amaclarini guncelle"""
         self.marka_kutusu.clear()
         self.kullanim_kutusu.clear()
 
@@ -819,7 +818,7 @@ class ChatWindow(QMainWindow):
 
     def sohbeti_kaydet(self, kullanici_girdi, asistan_cevabi):
         """Sohbeti arka planda kaydet"""
-        def save_chat():
+        def sohbet_kaydet():
             try:
                 dosya_adi = f"gecmisler/{degiskenler.giris_yapan_email}.txt"
                 os.makedirs("gecmisler", exist_ok=True)
@@ -829,13 +828,14 @@ class ChatWindow(QMainWindow):
             except Exception as e:
                 print(f"Sohbet kaydetme hatası: {e}")
 
-        threading.Thread(target=save_chat, daemon=True).start()
+        threading.Thread(target=sohbet_kaydet, daemon=True).start()
 
     @lru_cache(maxsize=32)
     def ai_cevabini_formatla(self, metin):
-        """AI'dan gelen metni modern HTML formatına çevirir - cache'li"""
+        import re
+        """AI'dan gelen metni modern HTML formatina cevirir - onbellekli"""
         
-        # Başlık kalıpları
+        # Baslik kaliplari
         baslik_kaliplari = [
             "**Öneriler:**",
             "**ÜRÜN:**",
@@ -847,7 +847,7 @@ class ChatWindow(QMainWindow):
             "**Dezavantajları:**"
         ]
         
-        # Başlıkları modern HTML'e çevir
+        # Basliklari modern HTML'e cevir
         for kalip in baslik_kaliplari:
             temiz_baslik = kalip.replace("**", "").replace("*", "")
             if "ÜRÜN:" in kalip:
@@ -863,14 +863,12 @@ class ChatWindow(QMainWindow):
             
             metin = metin.replace(kalip, html_baslik)
         
-        # Ürün isimlerini vurgula
-        import re
+        # Urun isimlerini vurgula    
         metin = re.sub(r'(\d+\.)\s+([A-Za-zÇĞIİÖŞÜçğıiöşü\s\d\-]+(?:\([^)]*\))?)', 
                       r'<div style="background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 10px; margin: 8px 0;"><b style="color: #8b5cf6;">\1 \2</b></div>', metin)
         
-        # Diğer ** kalın yazıları HTML bold'a çevir
+        # Diger ** kalin yazilari HTML bold'a cevir
         metin = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', metin)
-        
         return metin
 
     def sohbet_gecmisini_temizle(self):
@@ -882,7 +880,7 @@ class ChatWindow(QMainWindow):
         self.grafik_butonu.setText("📊 Grafik Göster")
         
         # Cache'leri temizle
-        self.ai_cache.clear()
+        self.ai_onbellegi.clear()
         self.ai_cevabini_formatla.cache_clear()
         self.urun_adlarini_cikart.cache_clear()
         
@@ -893,53 +891,46 @@ class ChatWindow(QMainWindow):
     def mod_degistir(self):
         """Gece/Gündüz modu değiştir"""
         self.gece_modu = not self.gece_modu
-        
         if self.gece_modu:
             self.mod_butonu.setText("☀️ Gündüz")
-            self.apply_dark_theme()
+
+            # Gece modu renk paleti
+            palet = QPalette()
+            palet.setColor(QPalette.Window, QColor(15, 23, 42))
+            palet.setColor(QPalette.WindowText, Qt.white)
+            palet.setColor(QPalette.Base, QColor(30, 41, 59))
+            palet.setColor(QPalette.Text, Qt.white)
+            QApplication.setPalette(palet)
+            
+            # Karanlık tema stilleri
+            koyu_kart_stili = """
+                QFrame {
+                    background: rgba(30, 41, 59, 0.8);
+                    border: 2px solid rgba(100, 116, 139, 0.3);
+                    border-radius: 20px;
+                    backdrop-filter: blur(20px);
+                }
+            """
+            self.sol_panel.setStyleSheet(koyu_kart_stili)
+            self.sohbet_konteyneri.setStyleSheet(koyu_kart_stili)
         else:
             self.mod_butonu.setText("🌙 Gece")
-            self.apply_light_theme()
-
-    def apply_dark_theme(self):
-        """Gece modu tema uygula"""
-        # Gece modu renk paleti
-        palet = QPalette()
-        palet.setColor(QPalette.Window, QColor(15, 23, 42))
-        palet.setColor(QPalette.WindowText, Qt.white)
-        palet.setColor(QPalette.Base, QColor(30, 41, 59))
-        palet.setColor(QPalette.Text, Qt.white)
-        QApplication.setPalette(palet)
-        
-        # Karanlık tema stilleri
-        dark_card_style = """
-            QFrame {
-                background: rgba(30, 41, 59, 0.8);
-                border: 2px solid rgba(100, 116, 139, 0.3);
-                border-radius: 20px;
-                backdrop-filter: blur(20px);
-            }
-        """
-        self.left_panel.setStyleSheet(dark_card_style)
-        self.chat_container.setStyleSheet(dark_card_style)
-
-    def apply_light_theme(self):
-        """Gündüz modu tema uygula"""
-        # Gündüz modu renk paleti
-        QApplication.setPalette(QApplication.style().standardPalette())
-        
-        # Aydınlık tema stilleri
-        light_card_style = """
-            QFrame {
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 20px;
-                backdrop-filter: blur(20px);
-            }
-        """
-        self.left_panel.setStyleSheet(light_card_style)
-        self.chat_container.setStyleSheet(light_card_style)
-
+            """Gündüz modu tema uygula"""
+            # Gündüz modu renk paleti
+            QApplication.setPalette(QApplication.style().standardPalette())
+            
+            # Aydınlık tema stilleri
+            acik_kart_stili = """
+                QFrame {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 20px;
+                    backdrop-filter: blur(20px);
+                }
+            """
+            self.sol_panel.setStyleSheet(acik_kart_stili)
+            self.sohbet_konteyneri.setStyleSheet(acik_kart_stili)   
+       
     def cikis_yap(self):
         """Çıkış Yap butonu - giriş ekranına dön"""
         # Açık grafik pencerelerini kapat
@@ -950,29 +941,28 @@ class ChatWindow(QMainWindow):
                 except:
                     pass
         
-        reply = QMessageBox.question(self, "🚪 Çıkış Yap", 
+        cevap = QMessageBox.question(self, "🚪 Çıkış Yap", 
                                    "Giriş ekranına dönmek istiyor musunuz?",
                                    QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            from girisEkrani import LoginRegisterWindow
-            self.login_window = LoginRegisterWindow()
-            self.login_window.show()
+        if cevap == QMessageBox.Yes:
+            self.giris_ekrani = LoginWindow()
+            self.giris_ekrani.show()
             self.hide()
 
     def closeEvent(self, event):
         """Pencere kapatılırken cleanup işlemleri"""
         try:
             # Timer'ları durdur
-            self.cleanup_timer.stop()
-            self.typing_timer.stop_typing()
+            self.temizlik_zamanlayicisi.stop()
+            self.yazma_zamanlayicisi.stop_typing()
             
             # AI handler'ı temizle
-            if hasattr(self.ai_handler, 'executor'):
-                self.ai_handler.executor.shutdown(wait=False)
+            if hasattr(self.ai_isleyicisi, 'executor'):
+                self.ai_isleyicisi.shutdown(wait=False)
             
             # Mevcut AI isteğini iptal et
-            if self.current_ai_future and not self.current_ai_future.done():
-                self.current_ai_future.cancel()
+            if self.mevcut_ai_gelecegi and not self.mevcut_ai_gelecegi.done():
+                self.mevcut_ai_gelecegi.cancel()
             
             # Açık grafik pencerelerini kapat
             for pencere in self.grafik_pencereleri:
@@ -983,7 +973,7 @@ class ChatWindow(QMainWindow):
                         pass
             
             # Cache'leri temizle
-            self.ai_cache.clear()
+            self.ai_onbellegi.clear()
             
             # Garbage collection
             gc.collect()
@@ -994,33 +984,33 @@ class ChatWindow(QMainWindow):
         QApplication.quit()
         event.accept()
 
-    def mousePressEvent(self, event):
-        """Mouse press event - pencere taşıma için"""
+    def fare_tiklamasi(self, event):
+        """pencere taşıma için"""
         if event.button() == Qt.LeftButton:
-            self.drag_start_position = event.globalPos()
+            self.surukleme_pozisyonu = event.globalPos()
 
-    def mouseMoveEvent(self, event):
-        """Mouse move event - pencere taşıma için"""
-        if event.buttons() == Qt.LeftButton and hasattr(self, 'drag_start_position'):
-            self.move(self.pos() + event.globalPos() - self.drag_start_position)
-            self.drag_start_position = event.globalPos()
+    def fare_suruklemesi(self, event):
+        """pencere taşıma için"""
+        if event.buttons() == Qt.LeftButton and hasattr(self, 'surukleme_pozisyonu'):
+            self.move(self.pos() + event.globalPos() - self.surukleme_pozisyonu)
+            self.surukleme_pozisyonu = event.globalPos()
 
 def main():
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    app.setWindowIcon(QIcon("robot.png"))
+    uygulama = QApplication(sys.argv)
+    uygulama.setStyle('Fusion')
+    uygulama.setWindowIcon(QIcon("robot.png")) #<a href="https://www.flaticon.com/free-icons/robot" title="robot icons">Robot icons created by Hilmy Abiyyu A. - Flaticon</a>
     
-    chat_window = ChatWindow()
-    chat_window.show()
+    uygulama_ekrani = LoginWindow()
+    uygulama_ekrani.show()
     
     # Fade in animation
-    fade_in = QPropertyAnimation(chat_window, b"windowOpacity")
-    fade_in.setDuration(1000)
-    fade_in.setStartValue(0.0)
-    fade_in.setEndValue(1.0)
-    fade_in.start()
+    kaybolma_animasyonu = QPropertyAnimation(uygulama_ekrani, b"windowOpacity")
+    kaybolma_animasyonu.setDuration(1000)
+    kaybolma_animasyonu.setStartValue(0.0)
+    kaybolma_animasyonu.setEndValue(1.0)
+    kaybolma_animasyonu.start()
     
-    sys.exit(app.exec_())
+    sys.exit(uygulama.exec_())
 
 if __name__ == "__main__":
     main()
