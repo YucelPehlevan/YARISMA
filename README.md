@@ -1,0 +1,3 @@
+## Kullanılan İkonlar
+
+- Robot icons created by [Hilmy Abiyyu A. - Flaticon](https://www.flaticon.com/free-icons/robot)
